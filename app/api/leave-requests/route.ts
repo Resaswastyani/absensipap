@@ -10,7 +10,7 @@ const schema = z.object({
   reason: z.string().trim().min(5, 'Alasan minimal 5 karakter.').max(500, 'Alasan maksimal 500 karakter.'),
 })
 
-export const GET = route(['employee'], async ({ user }) => {
+export const GET = route('attendee', async ({ user }) => {
   const rows = await query(
     `SELECT r.id, r.type, r.start_date, r.end_date, r.reason, r.status, r.review_note, r.reviewed_at, r.created_at,
             rv.name AS reviewer_name
@@ -21,7 +21,7 @@ export const GET = route(['employee'], async ({ user }) => {
   return ok(rows)
 })
 
-export const POST = route(['employee'], async ({ req, user, ip }) => {
+export const POST = route('attendee', async ({ req, user, ip }) => {
   const body = await parseBody(req, schema)
   if (body.end_date < body.start_date) throw new ApiError(422, 'Tanggal selesai tidak boleh sebelum tanggal mulai.')
   const days = (Date.parse(body.end_date) - Date.parse(body.start_date)) / 86400000 + 1

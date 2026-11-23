@@ -3,7 +3,7 @@ import { findActiveRecord, resolveShift } from '@/lib/server/attendance'
 import { query } from '@/lib/server/db'
 import { nowJakarta } from '@/lib/server/time'
 
-export const GET = route(['employee'], async ({ user }) => {
+export const GET = route('attendee', async ({ user }) => {
   const [record, shift, offices] = await Promise.all([
     findActiveRecord(user.id),
     resolveShift(user),

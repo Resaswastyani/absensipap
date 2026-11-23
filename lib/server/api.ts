@@ -1,7 +1,7 @@
 import 'server-only'
 import { NextResponse, type NextRequest } from 'next/server'
 import { z, type ZodType } from 'zod'
-import { getCurrentUser, type CurrentUser } from './auth'
+import { canAttend, getCurrentUser, type CurrentUser } from './auth'
 import { execute } from './db'
 import type { Role } from '../session-token'
 
@@ -57,13 +57,16 @@ type Ctx<P> = { req: NextRequest; user: CurrentUser; params: P; ip: string }
 type Handler<P> = (ctx: Ctx<P>) => Promise<Response>
 
 /** Bungkus route handler: cek origin, sesi, peran, dan tangani error secara seragam. */
-export function route<P = Record<string, string>>(roles: Role[] | 'any', handler: Handler<P>) {
+// 'attendee' = karyawan, atau admin yang juga ditandai sebagai karyawan (bisa absen).
+export function route<P = Record<string, string>>(roles: Role[] | 'any' | 'attendee', handler: Handler<P>) {
   return async (req: NextRequest, context: { params: Promise<P> }) => {
     try {
       assertSameOrigin(req)
       const user = await getCurrentUser()
       if (!user) return fail(401, 'Sesi berakhir. Silakan login kembali.')
-      if (roles !== 'any' && !roles.includes(user.role)) return fail(403, 'Anda tidak memiliki akses.')
+      if (roles === 'attendee') {
+        if (!canAttend(user)) return fail(403, 'Akun Anda tidak terdaftar untuk absensi.')
+      } else if (roles !== 'any' && !roles.includes(user.role)) return fail(403, 'Anda tidak memiliki akses.')
       const params = (await context?.params) ?? ({} as P)
       return await handler({ req, user, params, ip: clientIp(req) })
     } catch (error) {

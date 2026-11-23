@@ -128,3 +128,6 @@ INSERT IGNORE INTO shifts (name, start_time, end_time, late_tolerance_minutes) V
 
 INSERT IGNORE INTO departments (name) VALUES
   ('Produksi'), ('Quality Control'), ('Warehouse'), ('Maintenance'), ('Administrasi'), ('Human Resources');
+
+-- Admin yang juga karyawan (bisa absen). Untuk role employee selalu dianggap bisa absen.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS can_attend TINYINT(1) NOT NULL DEFAULT 0 AFTER role;

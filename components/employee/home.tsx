@@ -28,7 +28,7 @@ function useClock(offset: number) {
   return now
 }
 
-export function EmployeeHome({ firstName }: { firstName: string }) {
+export function EmployeeHome({ firstName, basePath = '/karyawan', nav }: { firstName: string; basePath?: string; nav?: React.ReactNode }) {
   const toast = useToast()
   const [data, setData] = useState<Today | null>(null)
   const [history, setHistory] = useState<History | null>(null)
@@ -75,6 +75,7 @@ export function EmployeeHome({ firstName }: { firstName: string }) {
 
   return (
     <div className="page">
+      {nav}
       <div className="hero-head">
         <div>
           <span className="eyebrow">{data ? longDate(data.now.date).toUpperCase() : 'MEMUAT…'}</span>
@@ -143,7 +144,7 @@ export function EmployeeHome({ firstName }: { firstName: string }) {
 
       <div className="section-head">
         <div><span className="card-subtitle">RINGKASAN</span><h2>{history ? monthLabel(history.month) : 'Bulan ini'}</h2></div>
-        <Link href="/karyawan/riwayat" className="link">Lihat riwayat <ArrowRight size={15} /></Link>
+        <Link href={`${basePath}/riwayat`} className="link">Lihat riwayat <ArrowRight size={15} /></Link>
       </div>
       <div className="stat-grid">
         <StatCard label="Hadir tepat waktu" value={stats?.hadir ?? '–'} unit="hari" tone="success" icon={<CalendarCheck2 size={18} />} />

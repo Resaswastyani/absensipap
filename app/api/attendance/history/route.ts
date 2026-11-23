@@ -4,7 +4,7 @@ import { query } from '@/lib/server/db'
 import { monthRange, nowJakarta } from '@/lib/server/time'
 import { monthSchema } from '@/lib/validation'
 
-export const GET = route(['employee'], async ({ req, user }) => {
+export const GET = route('attendee', async ({ req, user }) => {
   const month = req.nextUrl.searchParams.get('month') ?? nowJakarta().date.slice(0, 7)
   if (!monthSchema.safeParse(month).success) throw new ApiError(400, 'Format bulan tidak valid.')
   const { start, end } = monthRange(month)

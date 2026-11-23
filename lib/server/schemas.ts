@@ -6,6 +6,7 @@ export const employeeFields = {
   name: z.string().trim().min(2, 'Nama wajib diisi.').max(120),
   email: z.union([z.string().trim().toLowerCase().email('Email tidak valid.').max(150), z.literal('')]).optional(),
   role: z.enum(['admin', 'employee']).default('employee'),
+  can_attend: z.boolean().optional(),
   department_id: z.number().int().positive().nullable().optional(),
   shift_id: z.number().int().positive().nullable().optional(),
   position: z.string().trim().max(100).optional(),

@@ -15,7 +15,7 @@ const TYPES = [
   { value: 'koreksi', label: 'Koreksi absensi', hint: 'Lupa absen atau data keliru' },
 ]
 
-export function EmployeeRequests() {
+export function EmployeeRequests({ nav }: { nav?: React.ReactNode } = {}) {
   const toast = useToast()
   const [rows, setRows] = useState<Req[] | null>(null)
   const [error, setError] = useState('')
@@ -43,6 +43,7 @@ export function EmployeeRequests() {
 
   return (
     <div className="page">
+      {nav}
       <PageHeader eyebrow="LAYANAN HR" title="Pengajuan" description="Ajukan izin, sakit, cuti, atau koreksi absensi. Status akan diperbarui setelah ditinjau HR."
         actions={<Button icon={<Plus size={16} />} onClick={() => setOpen(true)}>Buat pengajuan</Button>} />
       {error && <Alert tone="danger">{error}</Alert>}

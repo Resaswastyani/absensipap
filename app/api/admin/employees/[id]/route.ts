@@ -24,6 +24,7 @@ export const PATCH = route<{ id: string }>(['admin'], async ({ req, user, params
     department_id: body.department_id, shift_id: body.shift_id, position: body.position === '' ? null : body.position,
     phone: body.phone === '' ? null : body.phone,
     is_active: body.is_active === undefined ? undefined : body.is_active ? 1 : 0,
+    can_attend: body.can_attend === undefined ? undefined : body.can_attend ? 1 : 0,
   }
   for (const [key, value] of Object.entries(map)) {
     if (value !== undefined) { sets.push(`${key} = ?`); values.push(value as string | number | null) }

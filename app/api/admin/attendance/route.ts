@@ -27,7 +27,7 @@ export const GET = route(['admin'], async ({ req }) => {
        LEFT JOIN departments d ON d.id = u.department_id
        LEFT JOIN shifts s ON s.id = u.shift_id
        LEFT JOIN office_locations l ON l.id = a.check_in_location_id
-      WHERE u.role = 'employee' AND u.is_active = 1 AND (u.name LIKE ? OR u.nik LIKE ?) ${extra}
+      WHERE (u.role = 'employee' OR u.can_attend = 1) AND u.is_active = 1 AND (u.name LIKE ? OR u.nik LIKE ?) ${extra}
       ORDER BY (a.check_in_at IS NULL), a.check_in_at, u.name LIMIT 2000`,
     params,
   )
@@ -47,8 +47,9 @@ const upsertSchema = z.object({
 // Koreksi manual oleh admin (wajib menyertakan catatan, tercatat di audit log).
 export const POST = route(['admin'], async ({ req, user, ip }) => {
   const body = await parseBody(req, upsertSchema)
-  const emp = await queryOne('SELECT id FROM users WHERE id = ? AND role = \'employee\'', [body.user_id])
+  const emp = await queryOne("SELECT id FROM users WHERE id = ? AND (role = 'employee' OR can_attend = 1)", [body.user_id])
   if (!emp) throw new ApiError(404, 'Karyawan tidak ditemukan.')
+  if (body.user_id === user.id) throw new ApiError(403, 'Koreksi absensi milik sendiri harus dilakukan oleh admin lain.')
   const toDateTime = (t?: string) => (t ? `${body.work_date} ${t.length === 5 ? `${t}:00` : t}` : null)
   const checkIn = toDateTime(body.check_in_time)
   let checkOut = toDateTime(body.check_out_time)

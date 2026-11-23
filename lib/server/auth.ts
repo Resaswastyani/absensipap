@@ -20,6 +20,12 @@ export type CurrentUser = {
   shift_end: string | null
   late_tolerance_minutes: number | null
   must_change_password: number
+  can_attend: number
+}
+
+/** Karyawan selalu bisa absen; admin hanya bila ditandai juga sebagai karyawan. */
+export function canAttend(user: Pick<CurrentUser, 'role' | 'can_attend'>) {
+  return user.role === 'employee' || Boolean(user.can_attend)
 }
 
 export async function createSessionCookie(user: { id: number; role: Role; token_version: number }) {
@@ -47,7 +53,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const user = await queryOne<CurrentUser & { token_version: number; is_active: number }>(
     `SELECT u.id, u.nik, u.name, u.email, u.role, u.position, u.phone, u.department_id, d.name AS department,
             u.shift_id, s.name AS shift_name, s.start_time AS shift_start, s.end_time AS shift_end,
-            s.late_tolerance_minutes, u.must_change_password, u.token_version, u.is_active
+            s.late_tolerance_minutes, u.must_change_password, u.can_attend, u.token_version, u.is_active
        FROM users u
        LEFT JOIN departments d ON d.id = u.department_id
        LEFT JOIN shifts s ON s.id = u.shift_id
@@ -64,5 +70,12 @@ export async function requirePageRole(role: Role) {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
   if (user.role !== role) redirect(user.role === 'admin' ? '/admin' : '/karyawan')
+  return user
+}
+
+/** Halaman absen milik admin: hanya untuk admin yang juga karyawan. */
+export async function requireAdminAttendee() {
+  const user = await requirePageRole('admin')
+  if (!canAttend(user)) redirect('/admin')
   return user
 }

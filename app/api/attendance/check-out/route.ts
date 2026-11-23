@@ -5,7 +5,7 @@ import { nearestOffice } from '@/lib/server/geo'
 import { savePhoto } from '@/lib/server/photos'
 import { nowJakarta } from '@/lib/server/time'
 
-export const POST = route(['employee'], async ({ req, user, ip }) => {
+export const POST = route('attendee', async ({ req, user, ip }) => {
   const body = await parseBody(req, checkSchema)
   const now = nowJakarta()
 

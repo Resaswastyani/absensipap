@@ -17,6 +17,7 @@ export const PATCH = route<{ id: string }>(['admin'], async ({ req, user, params
   )
   if (!request) throw new ApiError(404, 'Pengajuan tidak ditemukan.')
   if (request.status !== 'menunggu') throw new ApiError(409, 'Pengajuan ini sudah ditinjau.')
+  if (request.user_id === user.id) throw new ApiError(403, 'Pengajuan milik sendiri harus ditinjau oleh admin lain.')
   if (action === 'reject' && !note) throw new ApiError(422, 'Sertakan alasan penolakan.')
 
   const conn = await pool.getConnection()

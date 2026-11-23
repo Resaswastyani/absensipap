@@ -4,14 +4,14 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  CalendarCheck2, ChevronDown, ClipboardList, FileText, House, KeyRound, LayoutDashboard, LogOut, Moon,
+  CalendarCheck2, ChevronDown, Fingerprint, ClipboardList, FileText, House, KeyRound, LayoutDashboard, LogOut, Moon,
   Settings, Sun, UserRound, Users,
 } from 'lucide-react'
 import { api } from '@/lib/client'
 import { Avatar, ToastProvider } from './ui'
 
 type Role = 'admin' | 'employee'
-export type ShellUser = { name: string; nik: string; subtitle: string }
+export type ShellUser = { name: string; nik: string; subtitle: string; canAttend?: boolean }
 
 const NAV: Record<Role, { href: string; label: string; icon: typeof House; exact?: boolean }[]> = {
   employee: [
@@ -50,7 +50,9 @@ export function AppShell({ role, user, children }: { role: Role; user: ShellUser
   const [menuOpen, setMenuOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const items = NAV[role]
+  const items = role === 'admin' && user.canAttend
+    ? [NAV.admin[0], { href: '/admin/absen', label: 'Absen saya', icon: Fingerprint }, ...NAV.admin.slice(1)]
+    : NAV[role]
   const profileHref = role === 'admin' ? '/admin/profil' : '/karyawan/profil'
   const active = (href: string, exact?: boolean) => (exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`))
   const current = items.find((i) => active(i.href, i.exact))?.label ?? (pathname.endsWith('/profil') ? 'Profil' : '')

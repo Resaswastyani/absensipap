@@ -14,7 +14,7 @@ export const GET = route(['admin'], async () => {
               SUM(a.status IN ('izin','sakit','cuti')) AS izin,
               SUM(a.id IS NULL OR a.status = 'alpha') AS belum
          FROM users u LEFT JOIN attendance a ON a.user_id = u.id AND a.work_date = ?
-        WHERE u.role = 'employee' AND u.is_active = 1`,
+        WHERE (u.role = 'employee' OR u.can_attend = 1) AND u.is_active = 1`,
       [now.date],
     ),
     query(
@@ -23,7 +23,7 @@ export const GET = route(['admin'], async () => {
          FROM users u
          LEFT JOIN departments d ON d.id = u.department_id
          LEFT JOIN attendance a ON a.user_id = u.id AND a.work_date = ?
-        WHERE u.role = 'employee' AND u.is_active = 1
+        WHERE (u.role = 'employee' OR u.can_attend = 1) AND u.is_active = 1
         GROUP BY d.id, d.name ORDER BY total DESC`,
       [now.date],
     ),

@@ -2,7 +2,7 @@ import { ApiError, audit, ok, parseId, route } from '@/lib/server/api'
 import { execute } from '@/lib/server/db'
 
 // Karyawan membatalkan pengajuan miliknya yang masih menunggu.
-export const DELETE = route<{ id: string }>(['employee'], async ({ user, params, ip }) => {
+export const DELETE = route<{ id: string }>('attendee', async ({ user, params, ip }) => {
   const id = parseId(params.id)
   const result = await execute(
     "UPDATE leave_requests SET status = 'dibatalkan' WHERE id = ? AND user_id = ? AND status = 'menunggu'",

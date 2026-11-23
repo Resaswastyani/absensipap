@@ -21,7 +21,7 @@ export const GET = route(['admin'], async ({ req }) => {
   if (dept > 0) { where.push('u.department_id = ?'); params.push(dept) }
 
   const rows = await query(
-    `SELECT u.id, u.nik, u.name, u.email, u.role, u.position, u.phone, u.is_active, u.must_change_password,
+    `SELECT u.id, u.nik, u.name, u.email, u.role, u.position, u.phone, u.is_active, u.must_change_password, u.can_attend,
             u.department_id, d.name AS department, u.shift_id, s.name AS shift_name, u.last_login_at, u.created_at
        FROM users u LEFT JOIN departments d ON d.id = u.department_id LEFT JOIN shifts s ON s.id = u.shift_id
       WHERE ${where.join(' AND ')}
@@ -35,10 +35,10 @@ export const POST = route(['admin'], async ({ req, user, ip }) => {
   const body = await parseBody(req, createSchema)
   const hash = await bcrypt.hash(body.password, 12)
   const result = await execute(
-    `INSERT INTO users (nik, name, email, role, department_id, shift_id, position, phone, password_hash, must_change_password)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO users (nik, name, email, role, department_id, shift_id, position, phone, password_hash, must_change_password, can_attend)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [body.nik, body.name, body.email || null, body.role, body.department_id ?? null, body.shift_id ?? null,
-      body.position || null, body.phone || null, hash, 0],
+      body.position || null, body.phone || null, hash, 0, body.role === 'admin' && body.can_attend ? 1 : 0],
   )
   const { password: _pw, ...logged } = body
   await audit(user.id, 'employee_create', 'user', result.insertId, logged, ip)

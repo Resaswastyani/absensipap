@@ -9,7 +9,7 @@ import { useOptions, type Department, type Shift } from './use-options'
 
 type Employee = {
   id: number; nik: string; name: string; email: string | null; role: 'admin' | 'employee'; position: string | null; phone: string | null
-  is_active: number; must_change_password: number; department_id: number | null; department: string | null; shift_id: number | null; shift_name: string | null
+  is_active: number; must_change_password: number; can_attend: number; department_id: number | null; department: string | null; shift_id: number | null; shift_name: string | null
   last_login_at: string | null
 }
 
@@ -90,7 +90,7 @@ export function AdminEmployees() {
                     <td data-label="Karyawan"><div className="person"><Avatar name={r.name} size={34} /><div><strong>{r.name}</strong><small>NIK {r.nik}{r.email ? ` · ${r.email}` : ''}</small></div></div></td>
                     <td data-label="Divisi"><span>{r.department ?? '—'}</span><small>{r.position ?? ''}</small></td>
                     <td data-label="Shift">{r.shift_name ?? <span className="muted-text">Default</span>}</td>
-                    <td data-label="Peran"><span className={`role-chip role-${r.role}`}>{r.role === 'admin' ? 'Admin' : 'Karyawan'}</span></td>
+                    <td data-label="Peran"><span className={`role-chip role-${r.role}`}>{r.role === 'admin' ? 'Admin' : 'Karyawan'}</span>{r.role === 'admin' && Boolean(r.can_attend) && <small>+ ikut absen</small>}</td>
                     <td data-label="Status">{r.is_active ? <span className="badge tone-success"><i />Aktif</span> : <span className="badge tone-neutral"><i />Nonaktif</span>}</td>
                     <td data-label="Login terakhir">{r.last_login_at ? dateTime(r.last_login_at) : <span className="muted-text">Belum pernah</span>}</td>
                     <td data-label="Aksi" className="ta-right">
@@ -143,7 +143,7 @@ export function AdminEmployees() {
 function EmployeeForm({ value, departments, shifts, onClose, onSaved }: { value: Employee | 'new' | null; departments: Department[]; shifts: Shift[]; onClose: () => void; onSaved: (msg: string) => void }) {
   const isNew = value === 'new'
   const emp = value && value !== 'new' ? value : null
-  const [form, setForm] = useState({ nik: '', name: '', email: '', role: 'employee', department_id: '', shift_id: '', position: '', phone: '', password: '' })
+  const [form, setForm] = useState({ nik: '', name: '', email: '', role: 'employee', department_id: '', shift_id: '', position: '', phone: '', password: '', can_attend: false })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -153,7 +153,7 @@ function EmployeeForm({ value, departments, shifts, onClose, onSaved }: { value:
     setForm({
       nik: emp?.nik ?? '', name: emp?.name ?? '', email: emp?.email ?? '', role: emp?.role ?? 'employee',
       department_id: emp?.department_id ? String(emp.department_id) : '', shift_id: emp?.shift_id ? String(emp.shift_id) : '',
-      position: emp?.position ?? '', phone: emp?.phone ?? '', password: '',
+      position: emp?.position ?? '', phone: emp?.phone ?? '', password: '', can_attend: Boolean(emp?.can_attend),
     })
   }, [value]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -166,6 +166,7 @@ function EmployeeForm({ value, departments, shifts, onClose, onSaved }: { value:
     const body: Record<string, unknown> = {
       nik: form.nik, name: form.name, email: form.email, role: form.role, position: form.position, phone: form.phone,
       department_id: form.department_id ? Number(form.department_id) : null, shift_id: form.shift_id ? Number(form.shift_id) : null,
+      can_attend: form.role === 'admin' ? form.can_attend : false,
     }
     try {
       if (isNew) {
@@ -216,6 +217,9 @@ function EmployeeForm({ value, departments, shifts, onClose, onSaved }: { value:
             </select>
           </Field>
         </div>
+        {form.role === 'admin' && (
+          <label className="switch"><input type="checkbox" checked={form.can_attend} onChange={(e) => setForm((f) => ({ ...f, can_attend: e.target.checked }))} /><span /> Juga absen sebagai karyawan (muncul menu “Absen saya”)</label>
+        )}
         {isNew && (
           <Field label="Kata sandi awal" htmlFor="f-pw" hint="Min. 8 karakter berisi huruf & angka. Karyawan tidak dapat mengganti sendiri — perubahan lewat IT.">
             <input id="f-pw" className="input" type="text" autoComplete="off" value={form.password} onChange={set('password')} required minLength={8} />

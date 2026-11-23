@@ -12,6 +12,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         name: user.name,
         nik: user.nik,
         subtitle: user.position || 'Administrator',
+        canAttend: Boolean(user.can_attend),
       }}
     >
       {children}

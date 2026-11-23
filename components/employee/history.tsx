@@ -15,7 +15,7 @@ function shiftMonth(month: string, delta: number) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
-export function EmployeeHistory() {
+export function EmployeeHistory({ nav }: { nav?: React.ReactNode } = {}) {
   const [month, setMonth] = useState(currentMonth())
   const [data, setData] = useState<Data | null>(null)
   const [error, setError] = useState('')
@@ -33,6 +33,7 @@ export function EmployeeHistory() {
 
   return (
     <div className="page">
+      {nav}
       <PageHeader eyebrow="CATATAN KEHADIRAN" title="Riwayat absensi" description="Pantau jam masuk, pulang, dan status kehadiran Anda setiap bulan." />
       <div className="month-nav">
         <button className="icon-btn bordered" onClick={() => setMonth(shiftMonth(month, -1))} aria-label="Bulan sebelumnya"><ChevronLeft size={18} /></button>

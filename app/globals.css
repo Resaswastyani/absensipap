@@ -305,8 +305,8 @@ textarea.input { height: auto; padding: 10px 12px; resize: vertical; min-height:
 
 /* ---------- Tabs ---------- */
 .tabs { display: flex; gap: 4px; padding: 4px; background: var(--surface-3); border-radius: 12px; width: fit-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
-.tabs button { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border: 0; background: none; border-radius: 9px; font-weight: 700; font-size: 13.5px; color: var(--text-2); white-space: nowrap; }
-.tabs button.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.tabs button, .tabs a { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border: 0; background: none; border-radius: 9px; font-weight: 700; font-size: 13.5px; color: var(--text-2); white-space: nowrap; }
+.tabs button.active, .tabs a.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
 .tab-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; display: grid; place-items: center; background: var(--warning-soft); color: var(--warning-text); font-size: 11.5px; }
 
 /* ---------- Empty / loading ---------- */
@@ -542,7 +542,8 @@ textarea.input { height: auto; padding: 10px 12px; resize: vertical; min-height:
     background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: saturate(1.6) blur(14px);
     border-top: 1px solid var(--border); justify-content: space-around;
   }
-  .bottom-nav a { flex: 1; max-width: 96px; display: grid; justify-items: center; gap: 3px; padding: 7px 4px; border-radius: 12px; color: var(--text-3); font-size: 11px; font-weight: 700; }
+  .bottom-nav a { flex: 1; min-width: 0; max-width: 96px; display: grid; justify-items: center; gap: 3px; padding: 7px 4px; border-radius: 12px; color: var(--text-3); font-size: 11px; font-weight: 700; }
+  .bottom-nav a span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bottom-nav a.active { color: var(--primary-text); background: var(--primary-soft); }
   .stat-grid, .stat-grid-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .stat-card { flex-direction: column; gap: 10px; padding: 14px; }
@@ -557,7 +558,7 @@ textarea.input { height: auto; padding: 10px 12px; resize: vertical; min-height:
   .toolbar { padding: 12px; }
   .toolbar > .input, .toolbar > .select { flex: 1 1 140px; min-width: 0; }
   .tabs { width: 100%; }
-  .tabs button { flex: 1 0 auto; }
+  .tabs button, .tabs a { flex: 1 0 auto; justify-content: center; }
   .request-item { flex-wrap: wrap; padding: 16px; }
   .request-actions { width: 100%; }
   .request-actions .btn { flex: 1; height: 40px; }
