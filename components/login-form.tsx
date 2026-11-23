@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { ArrowRight, Camera, Eye, EyeOff, LockKeyhole, MapPin, ShieldCheck, UserRound } from 'lucide-react'
+import { ArrowRight, Camera, Eye, EyeOff, LockKeyhole, Mail, MapPin, ShieldCheck } from 'lucide-react'
 import { api, errorMessage } from '@/lib/client'
 import { Alert } from './ui'
 
 export default function LoginForm() {
-  const [identifier, setIdentifier] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -17,7 +17,7 @@ export default function LoginForm() {
     setError('')
     setLoading(true)
     try {
-      const res = await api<{ redirect: string }>('/api/auth/login', { method: 'POST', body: { identifier, password } })
+      const res = await api<{ redirect: string }>('/api/auth/login', { method: 'POST', body: { email, password } })
       window.location.href = res.redirect
     } catch (err) {
       setError(errorMessage(err))
@@ -29,7 +29,7 @@ export default function LoginForm() {
     <div className="login">
       <aside className="login-hero">
         <div className="login-hero-brand">
-          <span className="brand-mark brand-mark-lg"><img src="/logo-pap.png" alt="" /></span>
+          <span className="brand-mark brand-mark-lg"><img src="/logo-mark.png" alt="Logo PT Pandawa Amerta Packindo" width={512} height={512} decoding="async" /></span>
           <span><strong>PT Pandawa Amerta Packindo</strong><small>Flexible Plastic Packaging Manufacture</small></span>
         </div>
         <div className="login-hero-copy">
@@ -47,20 +47,16 @@ export default function LoginForm() {
 
       <main className="login-main">
         <div className="login-card">
-          <div className="login-mobile-brand">
-            <span className="brand-mark"><img src="/logo-pap.png" alt="" /></span>
-            <strong>PAP <em>Attendance</em></strong>
-          </div>
           <span className="eyebrow">PORTAL AKSES</span>
           <h2>Masuk ke akun Anda</h2>
-          <p className="muted-text">Gunakan NIK atau email kerja. Karyawan dan admin akan diarahkan ke halaman masing-masing.</p>
+          <p className="muted-text">Gunakan email kerja dan kata sandi Anda. Karyawan dan admin akan diarahkan ke halaman masing-masing.</p>
 
           <form className="form-stack" onSubmit={submit} noValidate>
             <div className="field">
-              <label htmlFor="identifier">NIK atau email kerja</label>
+              <label htmlFor="email">Email</label>
               <div className="input-icon">
-                <UserRound size={17} />
-                <input id="identifier" className="input" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="cth. 2024001" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
+                <Mail size={17} />
+                <input id="email" className="input" type="email" inputMode="email" autoComplete="username email" autoCapitalize="none" spellCheck={false} placeholder="nama@pandawaamerta.co.id" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
             </div>
             <div className="field">
@@ -72,7 +68,7 @@ export default function LoginForm() {
               </div>
             </div>
             {error && <Alert tone="danger">{error}</Alert>}
-            <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={loading || !identifier || !password}>
+            <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={loading || !email.trim() || !password}>
               {loading ? 'Memverifikasi…' : 'Masuk'} <ArrowRight size={17} />
             </button>
           </form>

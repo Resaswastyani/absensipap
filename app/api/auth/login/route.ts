@@ -5,7 +5,7 @@ import { createSessionCookie } from '@/lib/server/auth'
 import { execute, queryOne } from '@/lib/server/db'
 
 const schema = z.object({
-  identifier: z.string().trim().min(1, 'NIK atau email wajib diisi.').max(150),
+  email: z.string().trim().toLowerCase().min(1, 'Email wajib diisi.').max(150).email('Format email tidak valid.'),
   password: z.string().min(1, 'Kata sandi wajib diisi.').max(200),
 })
 
@@ -13,9 +13,9 @@ const schema = z.object({
 const DUMMY_HASH = bcrypt.hashSync('pap-dummy-password-for-timing', 12)
 
 export const POST = publicRoute(async (req) => {
-  const { identifier, password } = await parseBody(req, schema)
+  const { email, password } = await parseBody(req, schema)
   const ip = clientIp(req)
-  const id = identifier.toLowerCase()
+  const id = email
 
   const attempts = await queryOne<{ byId: number; byIp: number }>(
     `SELECT
@@ -29,14 +29,14 @@ export const POST = publicRoute(async (req) => {
   }
 
   const user = await queryOne<{ id: number; role: 'admin' | 'employee'; password_hash: string; is_active: number; token_version: number; must_change_password: number }>(
-    'SELECT id, role, password_hash, is_active, token_version, must_change_password FROM users WHERE nik = ? OR email = ? LIMIT 1',
-    [identifier, id],
+    'SELECT id, role, password_hash, is_active, token_version, must_change_password FROM users WHERE email = ? LIMIT 1',
+    [id],
   )
   const valid = await bcrypt.compare(password, user?.password_hash ?? DUMMY_HASH)
 
   if (!user || !valid || !user.is_active) {
     await execute('INSERT INTO login_attempts (identifier, ip, success) VALUES (?, ?, 0)', [id, ip])
-    throw new ApiError(401, user && valid && !user.is_active ? 'Akun Anda dinonaktifkan. Hubungi HR.' : 'NIK/email atau kata sandi salah.')
+    throw new ApiError(401, user && valid && !user.is_active ? 'Akun Anda dinonaktifkan. Hubungi HR.' : 'Email atau kata sandi salah.')
   }
 
   await execute('INSERT INTO login_attempts (identifier, ip, success) VALUES (?, ?, 1)', [id, ip])

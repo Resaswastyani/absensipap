@@ -87,8 +87,8 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; fo
 }
 .brand { display: flex; align-items: center; gap: 11px; padding: 4px 6px 4px; min-height: 48px; }
 .brand-mark { width: 38px; height: 38px; flex: 0 0 auto; border-radius: 11px; overflow: hidden; background: #fff; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--border); }
-.brand-mark img { width: 165%; height: 165%; max-width: none; object-fit: cover; object-position: 50% 44%; }
-.brand-mark-lg { width: 48px; height: 48px; border-radius: 14px; }
+.brand-mark img { display: block; width: 80%; height: 80%; max-width: none; object-fit: contain; }
+.brand-mark-lg { width: clamp(44px, 3.6vw, 56px); height: clamp(44px, 3.6vw, 56px); border-radius: clamp(12px, 1vw, 16px); }
 .brand-text { display: grid; line-height: 1.2; min-width: 0; }
 .brand-text strong, .topbar-brand strong { font-size: 15px; font-weight: 800; letter-spacing: -.2px; white-space: nowrap; }
 .brand-text em, .topbar-brand em, .login-mobile-brand em { font-style: normal; color: var(--primary); font-weight: 700; }
@@ -348,22 +348,41 @@ textarea.input { height: auto; padding: 10px 12px; resize: vertical; min-height:
 /* ---------- Login ---------- */
 .login { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(380px, 1fr) minmax(420px, 1fr); background: var(--surface); }
 .login-hero {
-  position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 40px;
-  padding: 40px clamp(32px, 5vw, 72px); color: #e8f3f8;
-  background: radial-gradient(circle at 85% 10%, rgba(27, 166, 220, .35), transparent 45%), radial-gradient(circle at 0% 100%, rgba(27, 166, 220, .25), transparent 50%), linear-gradient(160deg, #0f1d28 0%, #0d2a3a 100%);
+  position: relative; overflow: hidden; isolation: isolate; display: flex; flex-direction: column; gap: 28px;
+  padding: clamp(28px, 4vh, 44px) clamp(28px, 4.5vw, 72px); color: #e8f3f8;
+  background: radial-gradient(circle at 0% 100%, rgba(27, 166, 220, .18), transparent 50%), linear-gradient(160deg, #0f1d28 0%, #0b2433 100%);
 }
-.login-hero::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px); background-size: 36px 36px; mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); pointer-events: none; }
+/* Foto bersama mengisi bagian atas panel lalu memudar ke latar gelap,
+   sehingga judul & poin di bawah tidak menutupi wajah di foto. */
+.login-hero::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: var(--hero-photo-h, 64%); z-index: 0; pointer-events: none;
+  background: url('/login-bg.jpg') center 42% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+}
+/* Gelap tipis di atas (agar logo terbaca) dan di bawah foto (transisi ke teks). */
+.login-hero::after {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: var(--hero-photo-h, 64%); z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(8, 20, 29, .7) 0%, rgba(8, 20, 29, .15) 20%, rgba(8, 20, 29, 0) 45%, rgba(11, 34, 48, .55) 85%, rgba(11, 34, 48, .9) 100%);
+}
+@media (max-height: 820px) and (min-width: 768px) {
+  .login-hero { --hero-photo-h: 58%; }
+  .login-points { display: none; }
+}
 .login-hero > * { position: relative; z-index: 1; }
+.login-hero-copy { margin-top: auto; text-shadow: 0 1px 12px rgba(0, 0, 0, .45); }
+.login-hero-brand { text-shadow: 0 1px 8px rgba(0, 0, 0, .5); }
+.login-hero-brand .brand-mark { box-shadow: 0 6px 18px rgba(0, 0, 0, .3); }
 .login-hero-brand { display: flex; align-items: center; gap: 14px; }
 .login-hero-brand > span:last-child { display: grid; }
 .login-hero-brand strong { font-size: 16px; }
-.login-hero-brand small { color: #93b6c6; font-size: 12.5px; }
-.login-hero-copy h1 { font-size: clamp(28px, 3.2vw, 40px); line-height: 1.15; font-weight: 800; letter-spacing: -1px; margin: 14px 0; max-width: 520px; color: #fff; }
-.login-hero-copy p { color: #a9c4d1; max-width: 460px; font-size: 15px; }
+.login-hero-brand small { color: #c2d9e3; font-size: 12.5px; }
+.login-hero-copy h1 { font-size: clamp(24px, 2.8vw, 38px); line-height: 1.15; font-weight: 800; letter-spacing: -1px; margin: 14px 0; max-width: 520px; color: #fff; }
+.login-hero-copy p { color: #d3e4ec; max-width: 460px; font-size: 15px; }
 .login-points { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 12px; }
 .login-points li { display: flex; align-items: center; gap: 12px; color: #d6e8f0; font-weight: 600; }
 .login-points li span { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: rgba(255,255,255,.08); color: #6fd0f2; border: 1px solid rgba(255,255,255,.1); }
-.login-hero-foot { color: #7d9fae; font-size: 12.5px; }
+.login-hero-foot { color: #9fbccb; font-size: 12.5px; }
 .login-main { display: grid; place-items: center; padding: 40px 24px; background: var(--bg); }
 .login-card { width: min(100%, 420px); display: grid; gap: 10px; }
 .login-card h2 { font-size: 28px; font-weight: 800; letter-spacing: -.7px; }
@@ -516,8 +535,9 @@ textarea.input { height: auto; padding: 10px 12px; resize: vertical; min-height:
   .grid-home, .grid-profile { grid-template-columns: 1fr; }
   .map-frame { min-height: 220px; }
   .login { grid-template-columns: 1fr 1fr; }
-  .login-hero { padding: 32px; }
+  .login-hero { padding: 28px; }
   .login-points { display: none; }
+  .login-hero-copy p { font-size: 14px; }
 }
 
 /* Mobile: tanpa sidebar, navigasi bawah */
@@ -587,9 +607,19 @@ textarea.input { height: auto; padding: 10px 12px; resize: vertical; min-height:
   .toast-stack { top: auto; bottom: calc(84px + env(safe-area-inset-bottom)); left: 16px; right: 16px; width: auto; }
 
   .login { grid-template-columns: 1fr; }
-  .login-hero { display: none; }
-  .login-main { align-items: start; padding: 48px 20px 32px; background: var(--surface); }
-  .login-mobile-brand { display: flex; }
+  /* Foto jadi banner di atas form; teks hero disembunyikan agar tidak menumpuk. */
+  .login-hero {
+    --hero-photo-h: 100%;
+    min-height: clamp(200px, 36vh, 300px); padding: calc(18px + env(safe-area-inset-top)) 20px 20px; gap: 0;
+    background: var(--surface);
+  }
+  .login-hero::before { background-image: url('/login-bg-sm.jpg'); background-position: center 48%; -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent 100%); mask-image: linear-gradient(180deg, #000 70%, transparent 100%); }
+  .login-hero::after { background: linear-gradient(180deg, rgba(8, 20, 29, .75) 0%, rgba(8, 20, 29, .15) 40%, rgba(8, 20, 29, 0) 100%); }
+  .login-hero-copy, .login-hero-foot { display: none; }
+  .login-hero-brand { gap: 11px; }
+  .login-hero-brand strong { font-size: 15px; }
+  .login-hero-brand small { font-size: 11.5px; }
+  .login-main { align-items: start; padding: 8px 20px 32px; background: var(--surface); }
   .login-card h2 { font-size: 24px; }
 }
 
