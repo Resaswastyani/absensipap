@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation'
 const TABS = [
   { href: '/admin/absen', label: 'Absen hari ini' },
   { href: '/admin/absen/riwayat', label: 'Riwayat' },
-  { href: '/admin/absen/pengajuan', label: 'Pengajuan' },
 ]
 
 /** Navigasi halaman absensi pribadi untuk admin yang juga karyawan. */

@@ -6,7 +6,7 @@ export const GET = route(['admin'], async () => {
   const now = nowJakarta()
   const weekStart = addDays(now.date, -6)
 
-  const [totals, departments, recent, pending, trend, locations] = await Promise.all([
+  const [totals, departments, recent, trend, locations] = await Promise.all([
     queryOne<Record<string, number>>(
       `SELECT COUNT(*) AS total,
               SUM(a.status = 'hadir') AS hadir,
@@ -34,7 +34,6 @@ export const GET = route(['admin'], async () => {
         ORDER BY GREATEST(a.check_in_at, COALESCE(a.check_out_at, a.check_in_at)) DESC LIMIT 8`,
       [now.date],
     ),
-    queryOne<{ n: number }>("SELECT COUNT(*) AS n FROM leave_requests WHERE status = 'menunggu'"),
     query(
       `SELECT work_date, SUM(status = 'hadir') AS hadir, SUM(status = 'terlambat') AS terlambat,
               SUM(status IN ('izin','sakit','cuti')) AS izin
@@ -55,7 +54,6 @@ export const GET = route(['admin'], async () => {
     },
     departments,
     recent,
-    pendingRequests: Number(pending?.n ?? 0),
     trend,
     weekStart,
     hasLocation: Number(locations?.n ?? 0) > 0,

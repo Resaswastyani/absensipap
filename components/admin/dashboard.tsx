@@ -12,7 +12,6 @@ type Dashboard = {
   totals: { total: number; hadir: number; terlambat: number; izin: number; belum: number }
   departments: { name: string; total: number; present: number }[]
   recent: { id: number; name: string; nik: string; department: string | null; check_in_at: string; check_out_at: string | null; status: string; late_minutes: number }[]
-  pendingRequests: number
   trend: { work_date: string; hadir: number; terlambat: number; izin: number }[]
   weekStart: string
   hasLocation: boolean
@@ -85,16 +84,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
           )}
         </Card>
 
-        <Card title="Menunggu persetujuan" subtitle="TINDAKAN ANDA" className="pending-card">
-          <div className="pending-count">
-            <strong>{data?.pendingRequests ?? '–'}</strong>
-            <span>pengajuan izin, cuti, &amp; koreksi perlu ditinjau</span>
-          </div>
-          <Link href="/admin/pengajuan" className="btn btn-secondary btn-block">Tinjau pengajuan <ArrowRight size={15} /></Link>
-        </Card>
-      </div>
-
-      <div className="grid-1-2">
         <Card title="Kehadiran per divisi" subtitle="HARI INI">
           {!data ? <Skeleton rows={4} /> : data.departments.length === 0 ? <EmptyState title="Belum ada karyawan" /> : (
             <ul className="progress-list">
@@ -111,7 +100,10 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
           )}
         </Card>
 
-        <Card title="Aktivitas terbaru" subtitle="CHECK-IN HARI INI" flush actions={<Link href="/admin/absensi" className="link">Lihat semua <ArrowRight size={14} /></Link>}>
+      </div>
+
+
+      <Card title="Aktivitas terbaru" subtitle="CHECK-IN HARI INI" flush actions={<Link href="/admin/absensi" className="link">Lihat semua <ArrowRight size={14} /></Link>}>
           {!data ? <div className="pad"><Skeleton rows={5} /></div> : data.recent.length === 0 ? (
             <EmptyState icon={<AlertTriangle size={22} />} title="Belum ada check-in" description="Aktivitas check-in hari ini akan tampil di sini." />
           ) : (
@@ -127,7 +119,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
             </ul>
           )}
         </Card>
-      </div>
     </div>
   )
 }

@@ -10,18 +10,17 @@ Produksi: https://absensi.pandawaamerta.co.id
 - Check-in & check-out dengan kamera + validasi radius lokasi kantor (dicek di server)
 - Status otomatis *hadir / terlambat* berdasarkan shift & toleransi
 - Riwayat absensi bulanan + foto verifikasi
-- Pengajuan izin, sakit, cuti, koreksi absensi
-- Profil & ganti kata sandi
+- Profil (kata sandi karyawan dikelola IT/admin)
 
 **Admin** (`/admin`)
 - Dashboard: statistik hari ini, tren 7 hari, kehadiran per divisi, aktivitas terbaru
+- Izin/cuti dikelola di sistem lain; status izin/sakit/cuti dapat dicatat lewat koreksi absensi
 - Manajemen karyawan (tambah, ubah, nonaktifkan, reset kata sandi, peran admin/karyawan)
 - Rekap absensi harian, lihat foto, koreksi manual (wajib alasan), ekspor CSV bulanan
-- Persetujuan pengajuan (yang disetujui otomatis tercatat di absensi)
 - Pengaturan: lokasi kantor & radius, shift kerja, divisi, log aktivitas (audit)
 
 ## Keamanan
-- Password di-hash **bcrypt** (cost 12); kata sandi awal wajib diganti saat login pertama
+- Password di-hash **bcrypt** (cost 12); kata sandi karyawan hanya dapat diatur oleh IT/admin
 - Sesi **JWT HS256** di cookie `httpOnly`, `Secure`, `SameSite=Lax`, berlaku 12 jam; dapat dicabut (token version) saat ganti sandi / reset / nonaktif
 - Akses berbasis peran di 3 lapis: `proxy.ts`, layout server, dan setiap API route
 - Proteksi CSRF (cek `Origin` + header `X-Requested-With`)
@@ -51,12 +50,10 @@ pnpm dev
 | GET | `/api/attendance/today`, `/api/attendance/history?month=YYYY-MM` | karyawan |
 | POST | `/api/attendance/check-in`, `/api/attendance/check-out` | karyawan |
 | GET | `/api/attendance/:id/photo?kind=in\|out` | pemilik / admin |
-| GET, POST | `/api/leave-requests` · DELETE `/api/leave-requests/:id` | karyawan |
 | PATCH | `/api/profile` | login |
 | GET | `/api/admin/dashboard`, `/api/admin/options`, `/api/admin/audit-logs` | admin |
 | GET, POST | `/api/admin/employees` · PATCH, DELETE `/:id` · POST `/:id/reset-password` | admin |
 | GET, POST | `/api/admin/attendance` · GET `/api/admin/attendance/export?month=` | admin |
-| GET | `/api/admin/leave-requests` · PATCH `/:id` | admin |
 | CRUD | `/api/admin/locations`, `/api/admin/shifts`, `/api/admin/departments` | admin |
 
 ## Deploy (VPS)

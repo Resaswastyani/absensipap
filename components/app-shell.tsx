@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  CalendarCheck2, ChevronDown, Fingerprint, ClipboardList, FileText, House, KeyRound, LayoutDashboard, LogOut, Moon,
+  CalendarCheck2, ChevronDown, Fingerprint, House, KeyRound, LayoutDashboard, LogOut, Moon,
   Settings, Sun, UserRound, Users,
 } from 'lucide-react'
 import { api } from '@/lib/client'
@@ -17,14 +17,12 @@ const NAV: Record<Role, { href: string; label: string; icon: typeof House; exact
   employee: [
     { href: '/karyawan', label: 'Beranda', icon: House, exact: true },
     { href: '/karyawan/riwayat', label: 'Riwayat', icon: CalendarCheck2 },
-    { href: '/karyawan/pengajuan', label: 'Pengajuan', icon: FileText },
     { href: '/karyawan/profil', label: 'Profil', icon: UserRound },
   ],
   admin: [
     { href: '/admin', label: 'Ringkasan', icon: LayoutDashboard, exact: true },
     { href: '/admin/karyawan', label: 'Karyawan', icon: Users },
     { href: '/admin/absensi', label: 'Absensi', icon: CalendarCheck2 },
-    { href: '/admin/pengajuan', label: 'Pengajuan', icon: ClipboardList },
     { href: '/admin/pengaturan', label: 'Pengaturan', icon: Settings },
   ],
 }
