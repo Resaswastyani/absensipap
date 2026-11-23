@@ -36,9 +36,9 @@ export const POST = route(['admin'], async ({ req, user, ip }) => {
   const hash = await bcrypt.hash(body.password, 12)
   const result = await execute(
     `INSERT INTO users (nik, name, email, role, department_id, shift_id, position, phone, password_hash, must_change_password)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [body.nik, body.name, body.email || null, body.role, body.department_id ?? null, body.shift_id ?? null,
-      body.position || null, body.phone || null, hash],
+      body.position || null, body.phone || null, hash, body.role === 'admin' ? 1 : 0],
   )
   const { password: _pw, ...logged } = body
   await audit(user.id, 'employee_create', 'user', result.insertId, logged, ip)

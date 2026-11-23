@@ -120,7 +120,7 @@ export function AppShell({ role, user, children }: { role: Role; user: ShellUser
                   <div className="dropdown" role="menu">
                     <div className="dropdown-head"><strong>{user.name}</strong><small>NIK {user.nik}</small></div>
                     <button type="button" role="menuitem" onClick={() => router.push(profileHref)}><UserRound size={16} /> Profil saya</button>
-                    <button type="button" role="menuitem" onClick={() => router.push(`${profileHref}#keamanan`)}><KeyRound size={16} /> Ganti kata sandi</button>
+                    {role === 'admin' && <button type="button" role="menuitem" onClick={() => router.push(`${profileHref}#keamanan`)}><KeyRound size={16} /> Ganti kata sandi</button>}
                     <button type="button" role="menuitem" className="danger" onClick={logout} disabled={loggingOut}><LogOut size={16} /> Keluar</button>
                   </div>
                 )}
@@ -138,7 +138,7 @@ export function AppShell({ role, user, children }: { role: Role; user: ShellUser
           ))}
         </nav>
 
-        <Modal open={user.mustChangePassword} onClose={() => {}} dismissible={false} title="Buat kata sandi baru" subtitle="Keamanan akun" size="sm">
+        <Modal open={role === 'admin' && user.mustChangePassword} onClose={() => {}} dismissible={false} title="Buat kata sandi baru" subtitle="Keamanan akun" size="sm">
           <p className="muted-text" style={{ marginTop: 0 }}>Demi keamanan, ganti kata sandi sementara Anda sebelum melanjutkan.</p>
           <ChangePasswordForm onDone={() => router.refresh()} />
         </Modal>

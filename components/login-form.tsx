@@ -76,7 +76,7 @@ export default function LoginForm() {
               {loading ? 'Memverifikasi…' : 'Masuk'} <ArrowRight size={17} />
             </button>
           </form>
-          <p className="login-help"><ShieldCheck size={15} /> Lupa kata sandi? Hubungi HR/Admin untuk reset akun.</p>
+          <p className="login-help"><ShieldCheck size={15} /> Lupa kata sandi? Hubungi tim IT untuk reset akun.</p>
         </div>
       </main>
     </div>

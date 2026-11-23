@@ -58,10 +58,19 @@ export function ProfilePage({ profile }: { profile: ProfileData }) {
           </Card>
         </div>
         <div id="keamanan">
-          <Card title="Ganti kata sandi" subtitle="KEAMANAN">
-            <ChangePasswordForm />
-            <p className="fine-print"><ShieldCheck size={13} /> Setelah kata sandi diganti, semua sesi di perangkat lain otomatis keluar.</p>
-          </Card>
+          {profile.role === 'admin' ? (
+            <Card title="Ganti kata sandi" subtitle="KEAMANAN">
+              <ChangePasswordForm />
+              <p className="fine-print"><ShieldCheck size={13} /> Setelah kata sandi diganti, semua sesi di perangkat lain otomatis keluar.</p>
+            </Card>
+          ) : (
+            <Card title="Kata sandi" subtitle="KEAMANAN">
+              <div className="form-stack">
+                <Alert tone="info">Kata sandi akun dikelola oleh tim IT. Jika lupa atau ingin mengganti kata sandi, silakan hubungi IT.</Alert>
+                <p className="fine-print" style={{ justifyContent: 'flex-start', textAlign: 'left', marginTop: 0 }}><ShieldCheck size={13} /> Jangan bagikan kata sandi Anda kepada siapa pun.</p>
+              </div>
+            </Card>
+          )}
         </div>
       </div>
     </div>

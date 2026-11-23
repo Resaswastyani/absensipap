@@ -23,9 +23,10 @@ export function AdminEmployees() {
   const [role, setRole] = useState('')
   const [error, setError] = useState('')
   const [editing, setEditing] = useState<Employee | 'new' | null>(null)
-  const [confirm, setConfirm] = useState<{ kind: 'reset' | 'delete' | 'toggle'; emp: Employee } | null>(null)
+  const [confirm, setConfirm] = useState<{ kind: 'delete' | 'toggle'; emp: Employee } | null>(null)
   const [busy, setBusy] = useState(false)
-  const [tempPassword, setTempPassword] = useState<{ name: string; nik: string; password: string } | null>(null)
+  const [pwTarget, setPwTarget] = useState<Employee | null>(null)
+  const [tempPassword, setTempPassword] = useState<{ name: string; nik: string; password: string; role: string } | null>(null)
 
   const load = useCallback(async () => {
     const params = new URLSearchParams({ q, status })
@@ -41,10 +42,7 @@ export function AdminEmployees() {
     setBusy(true)
     const { kind, emp } = confirm
     try {
-      if (kind === 'reset') {
-        const res = await api<{ temporaryPassword: string }>(`/api/admin/employees/${emp.id}/reset-password`, { method: 'POST' })
-        setTempPassword({ name: emp.name, nik: emp.nik, password: res.temporaryPassword })
-      } else if (kind === 'toggle') {
+      if (kind === 'toggle') {
         await api(`/api/admin/employees/${emp.id}`, { method: 'PATCH', body: { is_active: !emp.is_active } })
         toast(emp.is_active ? 'Akun dinonaktifkan.' : 'Akun diaktifkan kembali.')
       } else {
@@ -98,7 +96,7 @@ export function AdminEmployees() {
                     <td data-label="Aksi" className="ta-right">
                       <div className="row-actions">
                         <button className="icon-btn" title="Ubah" aria-label={`Ubah ${r.name}`} onClick={() => setEditing(r)}><Pencil size={16} /></button>
-                        <button className="icon-btn" title="Reset kata sandi" aria-label={`Reset kata sandi ${r.name}`} onClick={() => setConfirm({ kind: 'reset', emp: r })}><KeyRound size={16} /></button>
+                        <button className="icon-btn" title="Atur kata sandi" aria-label={`Atur kata sandi ${r.name}`} onClick={() => setPwTarget(r)}><KeyRound size={16} /></button>
                         <button className="icon-btn" title={r.is_active ? 'Nonaktifkan' : 'Aktifkan'} aria-label={r.is_active ? `Nonaktifkan ${r.name}` : `Aktifkan ${r.name}`} onClick={() => setConfirm({ kind: 'toggle', emp: r })}>{r.is_active ? <UserX size={16} /> : <UserCheck size={16} />}</button>
                         <button className="icon-btn danger" title="Hapus" aria-label={`Hapus ${r.name}`} onClick={() => setConfirm({ kind: 'delete', emp: r })}><Trash2 size={16} /></button>
                       </div>
@@ -119,21 +117,20 @@ export function AdminEmployees() {
         onClose={() => setConfirm(null)}
         loading={busy}
         onConfirm={runConfirm}
-        tone={confirm?.kind === 'reset' ? 'primary' : 'danger'}
-        title={confirm?.kind === 'reset' ? 'Reset kata sandi?' : confirm?.kind === 'toggle' ? (confirm.emp.is_active ? 'Nonaktifkan akun?' : 'Aktifkan akun?') : 'Hapus karyawan?'}
-        confirmLabel={confirm?.kind === 'reset' ? 'Reset sekarang' : confirm?.kind === 'toggle' ? (confirm.emp.is_active ? 'Nonaktifkan' : 'Aktifkan') : 'Hapus'}
-        message={confirm?.kind === 'reset'
-          ? `Kata sandi sementara baru akan dibuat untuk ${confirm.emp.name}. Sesi login yang aktif akan dikeluarkan.`
-          : confirm?.kind === 'toggle'
+        title={confirm?.kind === 'toggle' ? (confirm.emp.is_active ? 'Nonaktifkan akun?' : 'Aktifkan akun?') : 'Hapus karyawan?'}
+        confirmLabel={confirm?.kind === 'toggle' ? (confirm.emp.is_active ? 'Nonaktifkan' : 'Aktifkan') : 'Hapus'}
+        message={confirm?.kind === 'toggle'
             ? confirm.emp.is_active ? `${confirm.emp.name} tidak akan bisa login sampai diaktifkan kembali.` : `${confirm.emp.name} akan dapat login kembali.`
             : `Data ${confirm?.emp.name} akan dihapus. Bila sudah memiliki riwayat absensi, akun hanya dinonaktifkan agar riwayat tetap tersimpan.`}
       />
 
-      <Modal open={tempPassword !== null} onClose={() => setTempPassword(null)} title="Kata sandi sementara" subtitle="TAMPIL SEKALI" size="sm"
+      <SetPasswordForm emp={pwTarget} onClose={() => setPwTarget(null)} onDone={(password) => { const e = pwTarget!; setPwTarget(null); setTempPassword({ name: e.name, nik: e.nik, password, role: e.role }); load() }} />
+
+      <Modal open={tempPassword !== null} onClose={() => setTempPassword(null)} title="Kata sandi baru tersimpan" subtitle="TAMPIL SEKALI" size="sm"
         footer={<Button onClick={() => setTempPassword(null)}>Selesai</Button>}>
         {tempPassword && (
           <div className="form-stack">
-            <p className="muted-text" style={{ margin: 0 }}>Berikan kata sandi ini kepada <strong>{tempPassword.name}</strong> (NIK {tempPassword.nik}). Karyawan wajib menggantinya saat login pertama.</p>
+            <p className="muted-text" style={{ margin: 0 }}>Berikan kata sandi ini kepada <strong>{tempPassword.name}</strong> (NIK {tempPassword.nik}).{tempPassword.role === 'admin' ? ' Admin tersebut wajib menggantinya saat login berikutnya.' : ' Sesi login lamanya sudah dikeluarkan.'}</p>
             <div className="secret-box"><code>{tempPassword.password}</code><button className="icon-btn" aria-label="Salin" onClick={() => { navigator.clipboard?.writeText(tempPassword.password); toast('Disalin ke clipboard.', 'info') }}><Copy size={16} /></button></div>
             <Alert tone="warning">Kata sandi ini tidak akan ditampilkan lagi.</Alert>
           </div>
@@ -220,10 +217,46 @@ function EmployeeForm({ value, departments, shifts, onClose, onSaved }: { value:
           </Field>
         </div>
         {isNew && (
-          <Field label="Kata sandi awal" htmlFor="f-pw" hint="Min. 8 karakter berisi huruf & angka. Karyawan wajib menggantinya saat login pertama.">
+          <Field label="Kata sandi awal" htmlFor="f-pw" hint="Min. 8 karakter berisi huruf & angka. Karyawan tidak dapat mengganti sendiri — perubahan lewat IT.">
             <input id="f-pw" className="input" type="text" autoComplete="off" value={form.password} onChange={set('password')} required minLength={8} />
           </Field>
         )}
+        {error && <Alert tone="danger">{error}</Alert>}
+      </form>
+    </Modal>
+  )
+}
+
+function SetPasswordForm({ emp, onClose, onDone }: { emp: Employee | null; onClose: () => void; onDone: (password: string) => void }) {
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => { if (emp) { setPassword(''); setError('') } }, [emp])
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!emp) return
+    setLoading(true)
+    setError('')
+    try {
+      const res = await api<{ password: string }>(`/api/admin/employees/${emp.id}/reset-password`, { method: 'POST', body: password ? { password } : {} })
+      onDone(res.password)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Modal open={emp !== null} onClose={onClose} title="Atur kata sandi" subtitle={emp ? `${emp.name} · NIK ${emp.nik}` : ''} size="sm"
+      footer={<><Button variant="secondary" onClick={onClose}>Batal</Button><Button type="submit" form="pw-form" loading={loading}>{password ? 'Simpan kata sandi' : 'Buat kata sandi acak'}</Button></>}>
+      <form id="pw-form" className="form-stack" onSubmit={submit}>
+        <Field label="Kata sandi baru" htmlFor="pw-set" hint="Min. 8 karakter berisi huruf & angka. Kosongkan untuk membuat kata sandi acak.">
+          <input id="pw-set" className="input" type="text" autoComplete="off" spellCheck={false} value={password} onChange={(e) => setPassword(e.target.value)} minLength={password ? 8 : undefined} maxLength={100} />
+        </Field>
+        <Alert tone="info">Sesi login {emp?.name} di semua perangkat akan dikeluarkan setelah kata sandi diubah.</Alert>
         {error && <Alert tone="danger">{error}</Alert>}
       </form>
     </Modal>

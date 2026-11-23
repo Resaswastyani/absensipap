@@ -10,7 +10,8 @@ const schema = z.object({
   newPassword: passwordSchema,
 })
 
-export const POST = route('any', async ({ req, user, ip }) => {
+// Karyawan tidak dapat mengganti kata sandi sendiri — hanya melalui IT/admin.
+export const POST = route(['admin'], async ({ req, user, ip }) => {
   const { currentPassword, newPassword } = await parseBody(req, schema)
   const row = await queryOne<{ password_hash: string; token_version: number }>('SELECT password_hash, token_version FROM users WHERE id = ?', [user.id])
   if (!row || !(await bcrypt.compare(currentPassword, row.password_hash))) throw new ApiError(400, 'Kata sandi lama tidak sesuai.')

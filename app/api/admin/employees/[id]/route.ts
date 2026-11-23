@@ -28,6 +28,8 @@ export const PATCH = route<{ id: string }>(['admin'], async ({ req, user, params
   for (const [key, value] of Object.entries(map)) {
     if (value !== undefined) { sets.push(`${key} = ?`); values.push(value as string | number | null) }
   }
+  // Karyawan tidak bisa ganti sandi sendiri, jadi flag wajib-ganti dilepas saat diturunkan ke karyawan.
+  if (body.role === 'employee') sets.push('must_change_password = 0')
   // Perubahan peran atau status aktif mencabut sesi yang sedang berjalan.
   if ((body.role && body.role !== target.role) || body.is_active === false) sets.push('token_version = token_version + 1')
   if (sets.length === 0) return ok({ updated: false })
