@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api } from '@/lib/client'
 
 export type Department = { id: number; name: string; members: number }
-export type Shift = { id: number; name: string; start_time: string; end_time: string; late_tolerance_minutes: number; members: number }
+export type Shift = { id: number; name: string; start_time: string; end_time: string; late_tolerance_minutes: number; is_default: number; members: number }
 
 export function useOptions() {
   const [departments, setDepartments] = useState<Department[]>([])

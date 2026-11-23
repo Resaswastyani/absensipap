@@ -28,6 +28,7 @@ export const shiftSchema = z.object({
   start_time: time,
   end_time: time,
   late_tolerance_minutes: z.number().int().min(0).max(240),
+  is_default: z.boolean().optional(),
 })
 
 export const departmentSchema = z.object({

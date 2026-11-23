@@ -38,7 +38,7 @@ export async function resolveShift(user: CurrentUser) {
     return { name: user.shift_name ?? 'Shift', start: user.shift_start, end: user.shift_end, tolerance: user.late_tolerance_minutes ?? 0 }
   }
   const fallback = await queryOne<{ name: string; start_time: string; end_time: string; late_tolerance_minutes: number }>(
-    'SELECT name, start_time, end_time, late_tolerance_minutes FROM shifts ORDER BY id LIMIT 1',
+    'SELECT name, start_time, end_time, late_tolerance_minutes FROM shifts ORDER BY is_default DESC, id LIMIT 1',
   )
   return {
     name: fallback?.name ?? 'Shift Pagi',

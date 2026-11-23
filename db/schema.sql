@@ -131,3 +131,6 @@ INSERT IGNORE INTO departments (name) VALUES
 
 -- Admin yang juga karyawan (bisa absen). Untuk role employee selalu dianggap bisa absen.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS can_attend TINYINT(1) NOT NULL DEFAULT 0 AFTER role;
+
+-- Shift default untuk karyawan tanpa shift khusus.
+ALTER TABLE shifts ADD COLUMN IF NOT EXISTS is_default TINYINT(1) NOT NULL DEFAULT 0;

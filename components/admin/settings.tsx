@@ -152,14 +152,14 @@ function ShiftsTab() {
   const [editing, setEditing] = useState<Shift | 'new' | null>(null)
   const [deleting, setDeleting] = useState<Shift | null>(null)
   const [busy, setBusy] = useState(false)
-  const [f, setF] = useState({ name: '', start_time: '08:00', end_time: '17:00', late_tolerance_minutes: '5' })
+  const [f, setF] = useState({ name: '', start_time: '08:00', end_time: '17:00', late_tolerance_minutes: '5', is_default: false })
   const [error, setError] = useState('')
   const sh = editing && editing !== 'new' ? editing : null
 
   useEffect(() => {
     if (!editing) return
     setError('')
-    setF(sh ? { name: sh.name, start_time: sh.start_time.slice(0, 5), end_time: sh.end_time.slice(0, 5), late_tolerance_minutes: String(sh.late_tolerance_minutes) } : { name: '', start_time: '08:00', end_time: '17:00', late_tolerance_minutes: '5' })
+    setF(sh ? { name: sh.name, start_time: sh.start_time.slice(0, 5), end_time: sh.end_time.slice(0, 5), late_tolerance_minutes: String(sh.late_tolerance_minutes), is_default: Boolean(sh.is_default) } : { name: '', start_time: '08:00', end_time: '17:00', late_tolerance_minutes: '5', is_default: false })
   }, [editing]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = async (e: FormEvent) => {
@@ -184,7 +184,7 @@ function ShiftsTab() {
             {shifts.map((s) => (
               <li key={s.id}>
                 <span className="setting-icon"><Clock3 size={18} /></span>
-                <div className="setting-main"><strong>{s.name}</strong><small>{s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)} · toleransi {s.late_tolerance_minutes} menit · {s.members} karyawan</small></div>
+                <div className="setting-main"><strong>{s.name}{Boolean(s.is_default) && <span className="badge tone-primary"><i />Default</span>}</strong><small>{s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)} · toleransi {s.late_tolerance_minutes} menit · {s.members} karyawan</small></div>
                 <div className="row-actions">
                   <button className="icon-btn" onClick={() => setEditing(s)} aria-label={`Ubah ${s.name}`}><Pencil size={16} /></button>
                   <button className="icon-btn danger" onClick={() => setDeleting(s)} aria-label={`Hapus ${s.name}`}><Trash2 size={16} /></button>
@@ -203,6 +203,7 @@ function ShiftsTab() {
             <Field label="Jam pulang" htmlFor="s-end"><input id="s-end" className="input" type="time" value={f.end_time} onChange={(e) => setF({ ...f, end_time: e.target.value })} required /></Field>
           </div>
           <Field label="Toleransi terlambat (menit)" htmlFor="s-tol"><input id="s-tol" className="input" type="number" min={0} max={240} value={f.late_tolerance_minutes} onChange={(e) => setF({ ...f, late_tolerance_minutes: e.target.value })} required /></Field>
+          <label className="switch"><input type="checkbox" checked={f.is_default} onChange={(e) => setF({ ...f, is_default: e.target.checked })} /><span /> Jadikan shift default (untuk karyawan tanpa shift khusus)</label>
           {error && <Alert tone="danger">{error}</Alert>}
         </form>
       </Modal>

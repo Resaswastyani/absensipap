@@ -207,7 +207,7 @@ function EmployeeForm({ value, departments, shifts, onClose, onSaved }: { value:
         <div className="form-row">
           <Field label="Shift kerja" htmlFor="f-shift">
             <select id="f-shift" className="input select" value={form.shift_id} onChange={set('shift_id')}>
-              <option value="">Default (shift pertama)</option>
+              <option value="">Default{(() => { const d = shifts.find((s) => s.is_default) ?? shifts[0]; return d ? ` — ${d.name} (${d.start_time.slice(0, 5)}–${d.end_time.slice(0, 5)})` : '' })()}</option>
               {shifts.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)})</option>)}
             </select>
           </Field>

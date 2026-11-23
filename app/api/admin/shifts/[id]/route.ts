@@ -7,6 +7,7 @@ export const PATCH = route<{ id: string }>(['admin'], async ({ req, user, params
   const b = await parseBody(req, shiftSchema)
   const r = await execute('UPDATE shifts SET name = ?, start_time = ?, end_time = ?, late_tolerance_minutes = ? WHERE id = ?', [b.name, b.start_time, b.end_time, b.late_tolerance_minutes, id])
   if (r.affectedRows === 0) throw new ApiError(404, 'Shift tidak ditemukan.')
+  if (b.is_default) await execute('UPDATE shifts SET is_default = (id = ?)', [id])
   await audit(user.id, 'shift_update', 'shift', id, b, ip)
   return ok({ updated: true })
 })
