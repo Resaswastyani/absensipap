@@ -7,8 +7,17 @@ const font = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-sans', di
 export const metadata: Metadata = {
   title: { default: 'PAP Attendance', template: '%s | PAP Attendance' },
   description: 'Portal absensi karyawan PT Pandawa Amerta Packindo dengan verifikasi foto dan lokasi.',
-  robots: { index: false, follow: false },
-  icons: { icon: '/logo-pap.png', apple: '/logo-pap.png' },
+  robots: {
+    index: false, follow: false, nocache: true,
+    googleBot: { index: false, follow: false, noimageindex: true, 'max-snippet': 0, 'max-image-preview': 'none' },
+  },
+  icons: {
+    icon: [
+      { url: '/favicon-48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: { url: '/apple-icon.png', sizes: '180x180' },
+  },
 }
 
 export const viewport: Viewport = {

@@ -75,7 +75,7 @@ export function AppShell({ role, user, children }: { role: Role; user: ShellUser
       <div className="shell">
         <aside className="sidebar" aria-label="Navigasi utama">
           <Link href={items[0].href} className="brand">
-            <span className="brand-mark"><img src="/logo-pap.png" alt="" /></span>
+            <span className="brand-mark"><img src="/logo-mark.png" alt="Logo PT Pandawa Amerta Packindo" width={512} height={512} decoding="async" /></span>
             <span className="brand-text"><strong>PAP <em>Attendance</em></strong><small>{role === 'admin' ? 'Panel Admin' : 'Portal Karyawan'}</small></span>
           </Link>
           <span className="nav-label">Menu</span>
@@ -100,7 +100,7 @@ export function AppShell({ role, user, children }: { role: Role; user: ShellUser
         <div className="main">
           <header className="topbar">
             <Link href={items[0].href} className="topbar-brand" aria-label="Beranda">
-              <span className="brand-mark"><img src="/logo-pap.png" alt="" /></span>
+              <span className="brand-mark"><img src="/logo-mark.png" alt="Logo PT Pandawa Amerta Packindo" width={512} height={512} decoding="async" /></span>
               <strong>PAP <em>Attendance</em></strong>
             </Link>
             <div className="crumbs"><span>{role === 'admin' ? 'Admin' : 'Karyawan'}</span><span className="crumb-sep">/</span><strong>{current}</strong></div>
