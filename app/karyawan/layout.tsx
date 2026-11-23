@@ -12,7 +12,6 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
         name: user.name,
         nik: user.nik,
         subtitle: [user.position, user.department].filter(Boolean).join(' · ') || 'Karyawan',
-        mustChangePassword: Boolean(user.must_change_password),
       }}
     >
       {children}

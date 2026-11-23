@@ -33,10 +33,10 @@ if (admins[0].n === 0) {
   } else {
     const hash = await bcrypt.hash(password, 12)
     await conn.query(
-      "INSERT INTO users (nik, name, password_hash, role, must_change_password) VALUES (?, ?, ?, 'admin', 1)",
+      "INSERT INTO users (nik, name, password_hash, role, must_change_password) VALUES (?, ?, ?, 'admin', 0)",
       [nik, name, hash],
     )
-    console.log(`Admin awal dibuat dengan NIK "${nik}". Segera ganti kata sandi setelah login.`)
+    console.log(`Admin awal dibuat dengan NIK "${nik}". Ganti kata sandi melalui menu Profil.`)
   }
 }
 

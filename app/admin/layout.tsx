@@ -12,7 +12,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         name: user.name,
         nik: user.nik,
         subtitle: user.position || 'Administrator',
-        mustChangePassword: Boolean(user.must_change_password),
       }}
     >
       {children}

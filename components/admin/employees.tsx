@@ -91,7 +91,7 @@ export function AdminEmployees() {
                     <td data-label="Divisi"><span>{r.department ?? '—'}</span><small>{r.position ?? ''}</small></td>
                     <td data-label="Shift">{r.shift_name ?? <span className="muted-text">Default</span>}</td>
                     <td data-label="Peran"><span className={`role-chip role-${r.role}`}>{r.role === 'admin' ? 'Admin' : 'Karyawan'}</span></td>
-                    <td data-label="Status">{r.is_active ? <span className="badge tone-success"><i />Aktif</span> : <span className="badge tone-neutral"><i />Nonaktif</span>}{r.must_change_password ? <small>Wajib ganti sandi</small> : null}</td>
+                    <td data-label="Status">{r.is_active ? <span className="badge tone-success"><i />Aktif</span> : <span className="badge tone-neutral"><i />Nonaktif</span>}</td>
                     <td data-label="Login terakhir">{r.last_login_at ? dateTime(r.last_login_at) : <span className="muted-text">Belum pernah</span>}</td>
                     <td data-label="Aksi" className="ta-right">
                       <div className="row-actions">
@@ -130,7 +130,7 @@ export function AdminEmployees() {
         footer={<Button onClick={() => setTempPassword(null)}>Selesai</Button>}>
         {tempPassword && (
           <div className="form-stack">
-            <p className="muted-text" style={{ margin: 0 }}>Berikan kata sandi ini kepada <strong>{tempPassword.name}</strong> (NIK {tempPassword.nik}).{tempPassword.role === 'admin' ? ' Admin tersebut wajib menggantinya saat login berikutnya.' : ' Sesi login lamanya sudah dikeluarkan.'}</p>
+            <p className="muted-text" style={{ margin: 0 }}>Berikan kata sandi ini kepada <strong>{tempPassword.name}</strong> (NIK {tempPassword.nik}). Sesi login lamanya sudah dikeluarkan.</p>
             <div className="secret-box"><code>{tempPassword.password}</code><button className="icon-btn" aria-label="Salin" onClick={() => { navigator.clipboard?.writeText(tempPassword.password); toast('Disalin ke clipboard.', 'info') }}><Copy size={16} /></button></div>
             <Alert tone="warning">Kata sandi ini tidak akan ditampilkan lagi.</Alert>
           </div>

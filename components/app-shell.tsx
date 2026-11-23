@@ -8,11 +8,10 @@ import {
   Settings, Sun, UserRound, Users,
 } from 'lucide-react'
 import { api } from '@/lib/client'
-import { Avatar, Modal, ToastProvider } from './ui'
-import { ChangePasswordForm } from './change-password-form'
+import { Avatar, ToastProvider } from './ui'
 
 type Role = 'admin' | 'employee'
-export type ShellUser = { name: string; nik: string; subtitle: string; mustChangePassword: boolean }
+export type ShellUser = { name: string; nik: string; subtitle: string }
 
 const NAV: Record<Role, { href: string; label: string; icon: typeof House; exact?: boolean }[]> = {
   employee: [
@@ -137,11 +136,6 @@ export function AppShell({ role, user, children }: { role: Role; user: ShellUser
             </Link>
           ))}
         </nav>
-
-        <Modal open={role === 'admin' && user.mustChangePassword} onClose={() => {}} dismissible={false} title="Buat kata sandi baru" subtitle="Keamanan akun" size="sm">
-          <p className="muted-text" style={{ marginTop: 0 }}>Demi keamanan, ganti kata sandi sementara Anda sebelum melanjutkan.</p>
-          <ChangePasswordForm onDone={() => router.refresh()} />
-        </Modal>
       </div>
     </ToastProvider>
   )

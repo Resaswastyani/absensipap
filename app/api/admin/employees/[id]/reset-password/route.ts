@@ -25,10 +25,7 @@ export const POST = route<{ id: string }>(['admin'], async ({ req, user, params,
 
   const password = body.password ?? generatePassword()
   const hash = await bcrypt.hash(password, 12)
-  // Karyawan tidak bisa mengganti sandi sendiri, jadi tidak diwajibkan ganti.
-  // Admin lain tetap diwajibkan mengganti sandi yang diatur orang lain.
-  const mustChange = target.role === 'admin' && id !== user.id ? 1 : 0
-  await execute('UPDATE users SET password_hash = ?, must_change_password = ?, token_version = token_version + 1 WHERE id = ?', [hash, mustChange, id])
+  await execute('UPDATE users SET password_hash = ?, must_change_password = 0, token_version = token_version + 1 WHERE id = ?', [hash, id])
   await execute('DELETE FROM login_attempts WHERE identifier IN (SELECT LOWER(nik) FROM users WHERE id = ?)', [id])
   await audit(user.id, 'password_reset', 'user', id, { custom: Boolean(body.password) }, ip)
   return ok({ password, generated: !body.password })
