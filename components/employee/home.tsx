@@ -83,7 +83,7 @@ export function EmployeeHome({ firstName, basePath = '/karyawan', nav }: { first
       {nav}
       <div>
         <p className="text-sm text-muted-foreground">{data ? longDate(data.now.date) : ' '}</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-[1.65rem]">{greeting(hour)}, {firstName}</h1>
+        <h1 className="mt-1 text-2xl font-semibold tracking-[-0.01em] sm:text-[1.65rem]">{greeting(hour)}, {firstName}</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           {checkedOut ? 'Absensi hari ini sudah lengkap. Sampai jumpa besok.' : checkedIn ? 'Anda sudah check-in. Jangan lupa check-out saat pulang.' : 'Lakukan check-in saat tiba di area kerja.'}
         </p>

@@ -27,7 +27,7 @@ export function PageHeader({ title, description, actions }: { title: string; des
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-[1.65rem]">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-[-0.01em] sm:text-[1.65rem]">{title}</h1>
         {description && <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">{actions}</div>}
@@ -59,7 +59,7 @@ export function StatCard({ label, value, unit, icon, tone = 'primary', hint, cla
         <span className="text-[13px] leading-snug text-muted-foreground sm:text-sm">{label}</span>
         <span className={cn('grid size-8 shrink-0 place-items-center rounded-lg [&_svg]:size-4', TONE[tone])}>{icon}</span>
       </div>
-      <div className="mt-2 text-2xl font-semibold tracking-tight tabular-nums sm:text-[1.7rem]">
+      <div className="mt-2 text-2xl font-semibold sm:text-[1.7rem]">
         {value}
         {unit && <span className="ml-1 text-sm font-normal text-muted-foreground">{unit}</span>}
       </div>
@@ -169,7 +169,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
         aria-describedby={description ? undefined : undefined}
       >
         <div className="px-5 pt-5 pr-12 sm:px-6 sm:pt-6">
-          <DialogTitle className="text-lg font-semibold tracking-tight">{title}</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
           {description ? <DialogDescription className="mt-1 text-sm text-muted-foreground">{description}</DialogDescription> : <DialogDescription className="sr-only">{title}</DialogDescription>}
         </div>
         <div className="grid grid-cols-1 gap-4 overflow-y-auto px-5 py-5 sm:px-6">{children}</div>

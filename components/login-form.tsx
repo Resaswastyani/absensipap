@@ -83,7 +83,7 @@ export default function LoginForm({ recaptchaSiteKey = '' }: { recaptchaSiteKey?
 
           <div className="mt-auto hidden max-w-lg [text-shadow:0_1px_12px_rgba(0,0,0,.45)] lg:block">
             <p className="text-sm font-medium text-sky-200">PAP Attendance</p>
-            <h1 className="mt-3 text-3xl leading-tight font-semibold tracking-tight xl:text-4xl">Absensi yang tepat untuk hari kerja yang lebih teratur.</h1>
+            <h1 className="mt-3 text-3xl leading-tight font-semibold tracking-[-0.02em] xl:text-4xl">Absensi yang tepat untuk hari kerja yang lebih teratur.</h1>
             <p className="mt-3 text-[15px] text-white/80">Check-in dan check-out dengan verifikasi foto serta lokasi kantor, tercatat otomatis dan aman.</p>
             <ul className="mt-7 grid gap-3 [@media(max-height:820px)]:hidden">
               {FEATURES.map(({ icon: Icon, text }) => (
@@ -100,7 +100,7 @@ export default function LoginForm({ recaptchaSiteKey = '' }: { recaptchaSiteKey?
         {/* Form */}
         <main className="flex justify-center px-5 pt-6 pb-10 sm:px-8 sm:pt-10 lg:items-center lg:py-10">
           <div className="w-full max-w-[420px]">
-            <h2 className="text-2xl font-semibold tracking-tight">Masuk ke akun Anda</h2>
+            <h2 className="text-2xl font-semibold tracking-[-0.01em]">Masuk ke akun Anda</h2>
             <p className="mt-1.5 text-sm text-muted-foreground">Gunakan email kerja dan kata sandi Anda.</p>
 
             <form className="mt-7 grid gap-5" onSubmit={submit} noValidate>

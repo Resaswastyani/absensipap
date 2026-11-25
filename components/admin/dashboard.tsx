@@ -48,7 +48,7 @@ function TodaySummary({ totals, present, rate }: { totals?: Totals; present: num
           <p className="text-sm text-muted-foreground">Kehadiran hari ini</p>
           {totals ? (
             <>
-              <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums sm:text-5xl">{rate}<span className="text-2xl text-muted-foreground sm:text-3xl">%</span></p>
+              <p className="mt-1 text-4xl font-semibold tracking-[-0.02em] sm:text-5xl">{rate}<span className="ml-1 text-2xl font-medium text-muted-foreground sm:text-3xl">%</span></p>
               <p className="mt-2 text-sm text-muted-foreground">
                 <span className="font-medium text-foreground tabular-nums">{present}</span> dari <span className="tabular-nums">{total}</span> karyawan sudah hadir
               </p>
@@ -74,7 +74,7 @@ function TodaySummary({ totals, present, rate }: { totals?: Totals; present: num
                   <span className="truncate">{i.label}</span>
                 </span>
                 <span className="mt-1.5 flex items-baseline justify-between gap-2">
-                  <span className="text-2xl font-semibold tracking-tight tabular-nums">{totals ? i.value : '–'}</span>
+                  <span className="text-2xl font-semibold">{totals ? i.value : '–'}</span>
                   <span className="text-xs text-muted-foreground tabular-nums">{totals ? `${pct(i.value)}%` : ''}</span>
                 </span>
               </Link>
