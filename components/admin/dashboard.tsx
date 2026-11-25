@@ -86,6 +86,44 @@ function TodaySummary({ totals, present, rate }: { totals?: Totals; present: num
   )
 }
 
+const DEPT_LIMIT = 6
+
+/** Daftar meter per divisi: nama, bar, dan angka sejajar; 6 teratas lalu bisa diperluas. */
+function DepartmentList({ departments }: { departments?: Dashboard['departments'] }) {
+  const [expanded, setExpanded] = useState(false)
+  const list = departments ?? []
+  const shown = expanded ? list : list.slice(0, DEPT_LIMIT)
+  return (
+    <Card title="Per divisi" description="Hadir hari ini dibanding jumlah karyawan">
+      {!departments ? <Skeleton rows={5} /> : list.length === 0 ? <EmptyState title="Belum ada karyawan" /> : (
+        <>
+          <ul className="grid gap-3">
+            {shown.map((d) => {
+              const p = Number(d.present ?? 0)
+              const total = Number(d.total)
+              const pct = total ? (p / total) * 100 : 0
+              return (
+                <li key={d.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 sm:grid-cols-[minmax(0,1fr)_4.5rem_2.5rem]">
+                  <span className="truncate text-sm" title={d.name}>{d.name}</span>
+                  <span className="col-span-2 row-start-2 h-1.5 overflow-hidden rounded-full bg-primary/15 sm:col-span-1 sm:row-start-auto" role="img" aria-label={`${d.name}: ${p} dari ${total} hadir`}>
+                    <span className="block h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${pct}%` }} />
+                  </span>
+                  <span className="text-right text-sm text-muted-foreground tabular-nums"><span className="font-medium text-foreground">{p}</span>/{total}</span>
+                </li>
+              )
+            })}
+          </ul>
+          {list.length > DEPT_LIMIT && (
+            <Button variant="ghost" size="sm" className="mt-3 w-full" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}>
+              {expanded ? 'Tampilkan lebih sedikit' : `Tampilkan semua (${list.length})`}
+            </Button>
+          )}
+        </>
+      )}
+    </Card>
+  )
+}
+
 export function AdminDashboard({ adminName }: { adminName: string }) {
   const [data, setData] = useState<Dashboard | null>(null)
   const [error, setError] = useState('')
@@ -117,28 +155,10 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
 
       <TodaySummary totals={t} present={present} rate={rate} />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <AttendanceTrend days={days} rows={data?.trend ?? []} today={data?.date} loading={!data} />
-
-        <Card title="Per divisi" description="Kehadiran hari ini">
-          {!data ? <Skeleton rows={5} /> : data.departments.length === 0 ? <EmptyState title="Belum ada karyawan" /> : (
-            <ul className="grid gap-4">
-              {data.departments.map((d) => {
-                const p = Number(d.present ?? 0)
-                const pct = d.total ? (p / Number(d.total)) * 100 : 0
-                return (
-                  <li key={d.name}>
-                    <div className="mb-1.5 flex justify-between gap-3 text-sm">
-                      <span className="truncate">{d.name}</span>
-                      <span className="shrink-0 tabular-nums text-muted-foreground"><span className="font-medium text-foreground">{p}</span>/{d.total}</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${pct}%` }} /></div>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </Card>
+      {/* items-start: kartu tidak saling meregangkan tinggi */}
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-3">
+        <AttendanceTrend days={days} rows={data?.trend ?? []} today={data?.date} loading={!data} className="xl:col-span-2" />
+        <DepartmentList departments={data?.departments} />
       </div>
 
       <Card title="Aktivitas terbaru" description="Check-in dan check-out hari ini" flush actions={<Button variant="ghost" size="sm" asChild><Link href="/admin/absensi">Lihat semua <ArrowRight /></Link></Button>}>
