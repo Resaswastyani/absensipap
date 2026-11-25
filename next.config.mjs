@@ -4,13 +4,13 @@ const isDev = process.env.NODE_ENV !== 'production'
 
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/${isDev ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  "connect-src 'self' https://www.google.com/recaptcha/",
   "media-src 'self' blob:",
-  'frame-src https://www.openstreetmap.org',
+  'frame-src https://www.openstreetmap.org https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/',
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
