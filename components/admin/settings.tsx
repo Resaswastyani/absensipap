@@ -1,10 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Building2, Clock3, Crosshair, MapPin, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { Building2, Clock3, Crosshair, ExternalLink, MapPin, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import { api, errorMessage } from '@/lib/client'
 import { dateTime } from '@/lib/format'
-import { Alert, Button, Card, ConfirmDialog, EmptyState, Field, Modal, PageHeader, Skeleton, Tabs, useToast } from '../ui'
+import { Alert, Badge, Button, Card, ConfirmDialog, EmptyState, Field, Modal, PageHeader, Skeleton, Tabs, useToast } from '../kit'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu'
+import { Input } from '../ui/input'
+import { Label, Switch } from '../ui/misc'
 import { useOptions, type Department, type Shift } from './use-options'
 
 type Location = { id: number; name: string; address: string | null; latitude: number; longitude: number; radius_m: number; is_active: number }
@@ -14,7 +17,7 @@ const ACTION_LABEL: Record<string, string> = {
   login: 'Login', check_in: 'Check-in', check_out: 'Check-out', change_password: 'Ganti kata sandi', profile_update: 'Ubah profil',
   leave_create: 'Buat pengajuan', leave_cancel: 'Batalkan pengajuan', leave_approve: 'Setujui pengajuan', leave_reject: 'Tolak pengajuan',
   employee_create: 'Tambah karyawan', employee_update: 'Ubah karyawan', employee_delete: 'Hapus karyawan', employee_deactivate: 'Nonaktifkan karyawan',
-  password_reset: 'Reset kata sandi', attendance_correct: 'Koreksi absensi', attendance_export: 'Ekspor rekap',
+  password_reset: 'Atur kata sandi', attendance_correct: 'Koreksi absensi', attendance_export: 'Ekspor rekap',
   location_create: 'Tambah lokasi', location_update: 'Ubah lokasi', location_delete: 'Hapus lokasi',
   shift_create: 'Tambah shift', shift_update: 'Ubah shift', shift_delete: 'Hapus shift',
   department_create: 'Tambah divisi', department_update: 'Ubah divisi', department_delete: 'Hapus divisi',
@@ -25,14 +28,42 @@ type Tab = 'lokasi' | 'shift' | 'divisi' | 'log'
 export function AdminSettings() {
   const [tab, setTab] = useState<Tab>('lokasi')
   return (
-    <div className="page">
-      <PageHeader eyebrow="KONFIGURASI" title="Pengaturan" description="Atur titik lokasi absensi, jadwal shift, divisi, dan pantau log aktivitas sistem." />
-      <Tabs value={tab} onChange={setTab} items={[{ value: 'lokasi', label: 'Lokasi kantor' }, { value: 'shift', label: 'Shift kerja' }, { value: 'divisi', label: 'Divisi' }, { value: 'log', label: 'Log aktivitas' }]} />
+    <div className="grid grid-cols-1 gap-6">
+      <PageHeader title="Pengaturan" description="Lokasi absensi, jadwal shift, divisi, dan log aktivitas sistem." />
+      <Tabs value={tab} onChange={setTab} items={[{ value: 'lokasi', label: 'Lokasi' }, { value: 'shift', label: 'Shift' }, { value: 'divisi', label: 'Divisi' }, { value: 'log', label: 'Log aktivitas' }]} />
       {tab === 'lokasi' && <LocationsTab />}
       {tab === 'shift' && <ShiftsTab />}
       {tab === 'divisi' && <DepartmentsTab />}
       {tab === 'log' && <LogsTab />}
     </div>
+  )
+}
+
+/* ---------- Komponen daftar ---------- */
+function ListRow({ icon, title, meta, menu }: { icon: ReactNode; title: ReactNode; meta: ReactNode; menu: ReactNode }) {
+  return (
+    <li className="flex items-center gap-3 px-5 py-3.5 sm:gap-4 sm:px-6">
+      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary [&_svg]:size-[18px]">{icon}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2 text-sm font-medium">{title}</div>
+        <p className="mt-0.5 text-[13px] break-words text-muted-foreground">{meta}</p>
+      </div>
+      {menu}
+    </li>
+  )
+}
+
+function RowActions({ label, onEdit, onDelete, extra }: { label: string; onEdit: () => void; onDelete: () => void; extra?: ReactNode }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm" aria-label={`Aksi untuk ${label}`}><MoreHorizontal /></Button></DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        {extra}
+        <DropdownMenuItem onSelect={onEdit}><Pencil /> Ubah</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onSelect={onDelete}><Trash2 /> Hapus</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -48,24 +79,18 @@ function LocationsTab() {
 
   return (
     <>
-      <Card title="Titik lokasi absensi" subtitle="GEOFENCE" actions={<Button icon={<Plus size={16} />} onClick={() => setEditing('new')}>Tambah lokasi</Button>} flush>
-        {!rows ? <div className="pad"><Skeleton rows={3} /></div> : rows.length === 0 ? (
-          <EmptyState icon={<MapPin size={22} />} title="Belum ada lokasi" description="Tambahkan minimal satu lokasi kantor agar karyawan dapat check-in." />
+      <Card title="Titik lokasi absensi" description="Karyawan hanya dapat absen di dalam radius lokasi aktif." flush actions={<Button size="sm" icon={<Plus />} onClick={() => setEditing('new')}>Tambah</Button>}>
+        {!rows ? <div className="p-5"><Skeleton rows={3} /></div> : rows.length === 0 ? (
+          <EmptyState icon={<MapPin />} title="Belum ada lokasi" description="Tambahkan minimal satu lokasi kantor agar karyawan dapat check-in." />
         ) : (
-          <ul className="setting-list">
+          <ul className="divide-y">
             {rows.map((l) => (
-              <li key={l.id}>
-                <span className="setting-icon"><MapPin size={18} /></span>
-                <div className="setting-main">
-                  <strong>{l.name} {!l.is_active && <span className="badge tone-neutral"><i />Nonaktif</span>}</strong>
-                  <small>{l.address || 'Tanpa alamat'} · {Number(l.latitude).toFixed(6)}, {Number(l.longitude).toFixed(6)} · radius {l.radius_m} m</small>
-                </div>
-                <div className="row-actions">
-                  <a className="icon-btn" href={`https://www.google.com/maps/search/?api=1&query=${l.latitude},${l.longitude}`} target="_blank" rel="noopener noreferrer" title="Buka di peta" aria-label={`Buka ${l.name} di peta`}><Crosshair size={16} /></a>
-                  <button className="icon-btn" onClick={() => setEditing(l)} aria-label={`Ubah ${l.name}`}><Pencil size={16} /></button>
-                  <button className="icon-btn danger" onClick={() => setDeleting(l)} aria-label={`Hapus ${l.name}`}><Trash2 size={16} /></button>
-                </div>
-              </li>
+              <ListRow key={l.id} icon={<MapPin />}
+                title={<>{l.name}{!l.is_active && <Badge tone="neutral">Nonaktif</Badge>}</>}
+                meta={<>{l.address ? `${l.address} · ` : ''}{Number(l.latitude).toFixed(6)}, {Number(l.longitude).toFixed(6)} · radius {l.radius_m} m</>}
+                menu={<RowActions label={l.name} onEdit={() => setEditing(l)} onDelete={() => setDeleting(l)}
+                  extra={<DropdownMenuItem asChild><a href={`https://www.google.com/maps/search/?api=1&query=${l.latitude},${l.longitude}`} target="_blank" rel="noopener noreferrer"><ExternalLink /> Buka di peta</a></DropdownMenuItem>} />}
+              />
             ))}
           </ul>
         )}
@@ -124,22 +149,25 @@ function LocationForm({ value, onClose, onSaved }: { value: Location | 'new' | n
   }
 
   return (
-    <Modal open={value !== null} onClose={onClose} title={loc ? 'Ubah lokasi' : 'Tambah lokasi'} subtitle="TITIK ABSENSI"
+    <Modal open={value !== null} onClose={onClose} title={loc ? 'Ubah lokasi' : 'Tambah lokasi'} description="Titik dan radius tempat karyawan dapat absen."
       footer={<><Button variant="secondary" onClick={onClose}>Batal</Button><Button type="submit" form="loc-form" loading={loading}>Simpan lokasi</Button></>}>
-      <form id="loc-form" className="form-stack" onSubmit={submit}>
-        <Field label="Nama lokasi" htmlFor="l-name"><input id="l-name" className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required /></Field>
-        <Field label="Alamat (opsional)" htmlFor="l-addr"><input id="l-addr" className="input" value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></Field>
-        <div className="form-row">
-          <Field label="Latitude" htmlFor="l-lat"><input id="l-lat" className="input" inputMode="decimal" value={f.latitude} onChange={(e) => { if (!pasteCoords(e.target.value)) setF({ ...f, latitude: e.target.value }) }} required placeholder="-6.2xxxxx" /></Field>
-          <Field label="Longitude" htmlFor="l-lng"><input id="l-lng" className="input" inputMode="decimal" value={f.longitude} onChange={(e) => setF({ ...f, longitude: e.target.value })} required placeholder="106.8xxxxx" /></Field>
+      <form id="loc-form" className="grid gap-4 sm:grid-cols-2" onSubmit={submit}>
+        <Field label="Nama lokasi" htmlFor="l-name" className="sm:col-span-2"><Input id="l-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required /></Field>
+        <Field label="Alamat" htmlFor="l-addr" hint="Opsional." className="sm:col-span-2"><Input id="l-addr" value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></Field>
+        <Field label="Latitude" htmlFor="l-lat"><Input id="l-lat" inputMode="decimal" value={f.latitude} onChange={(e) => { if (!pasteCoords(e.target.value)) setF({ ...f, latitude: e.target.value }) }} required placeholder="-7.54108" /></Field>
+        <Field label="Longitude" htmlFor="l-lng"><Input id="l-lng" inputMode="decimal" value={f.longitude} onChange={(e) => setF({ ...f, longitude: e.target.value })} required placeholder="110.73653" /></Field>
+        <div className="grid gap-1.5 sm:col-span-2">
+          <Button type="button" variant="secondary" icon={<Crosshair />} loading={locating} onClick={useMine}>Gunakan lokasi saya saat ini</Button>
+          <p className="text-[13px] text-muted-foreground">Atau salin koordinat dari Google Maps lalu tempel ke kolom Latitude.</p>
         </div>
-        <Button type="button" variant="secondary" icon={<Crosshair size={16} />} loading={locating} onClick={useMine}>Gunakan lokasi saya saat ini</Button>
-        <p className="fine-print" style={{ marginTop: -6 }}>Tip: salin koordinat dari Google Maps (klik kanan → koordinat) lalu tempel ke kolom Latitude.</p>
-        <Field label={`Radius absensi: ${f.radius_m} m`} htmlFor="l-rad" hint="Karyawan hanya bisa absen di dalam radius ini. Disarankan 100–300 m.">
-          <input id="l-rad" type="range" min={20} max={1000} step={10} value={f.radius_m} onChange={(e) => setF({ ...f, radius_m: e.target.value })} className="range" />
+        <Field label={`Radius absensi: ${f.radius_m} m`} htmlFor="l-rad" hint="Disarankan 100–300 m." className="sm:col-span-2">
+          <input id="l-rad" type="range" min={20} max={1000} step={10} value={f.radius_m} onChange={(e) => setF({ ...f, radius_m: e.target.value })} className="w-full accent-primary" />
         </Field>
-        <label className="switch"><input type="checkbox" checked={f.is_active} onChange={(e) => setF({ ...f, is_active: e.target.checked })} /><span /> Lokasi aktif</label>
-        {error && <Alert tone="danger">{error}</Alert>}
+        <div className="flex items-center justify-between gap-4 rounded-lg border p-3.5 sm:col-span-2">
+          <Label htmlFor="l-active">Lokasi aktif</Label>
+          <Switch id="l-active" checked={f.is_active} onCheckedChange={(v) => setF({ ...f, is_active: v })} />
+        </div>
+        {error && <div className="sm:col-span-2"><Alert tone="danger">{error}</Alert></div>}
       </form>
     </Modal>
   )
@@ -178,33 +206,34 @@ function ShiftsTab() {
 
   return (
     <>
-      <Card title="Jadwal shift" subtitle="JAM KERJA" actions={<Button icon={<Plus size={16} />} onClick={() => setEditing('new')}>Tambah shift</Button>} flush>
-        {shifts.length === 0 ? <div className="pad"><Skeleton rows={3} /></div> : (
-          <ul className="setting-list">
+      <Card title="Jadwal shift" description="Jam kerja dan toleransi keterlambatan." flush actions={<Button size="sm" icon={<Plus />} onClick={() => setEditing('new')}>Tambah</Button>}>
+        {shifts.length === 0 ? <div className="p-5"><Skeleton rows={3} /></div> : (
+          <ul className="divide-y">
             {shifts.map((s) => (
-              <li key={s.id}>
-                <span className="setting-icon"><Clock3 size={18} /></span>
-                <div className="setting-main"><strong>{s.name}{Boolean(s.is_default) && <span className="badge tone-primary"><i />Default</span>}</strong><small>{s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)} · toleransi {s.late_tolerance_minutes} menit · {s.members} karyawan</small></div>
-                <div className="row-actions">
-                  <button className="icon-btn" onClick={() => setEditing(s)} aria-label={`Ubah ${s.name}`}><Pencil size={16} /></button>
-                  <button className="icon-btn danger" onClick={() => setDeleting(s)} aria-label={`Hapus ${s.name}`}><Trash2 size={16} /></button>
-                </div>
-              </li>
+              <ListRow key={s.id} icon={<Clock3 />}
+                title={<>{s.name}{Boolean(s.is_default) && <Badge tone="primary" dot={false}>Default</Badge>}</>}
+                meta={`${s.start_time.slice(0, 5)}–${s.end_time.slice(0, 5)} · toleransi ${s.late_tolerance_minutes} menit · ${s.members} orang`}
+                menu={<RowActions label={s.name} onEdit={() => setEditing(s)} onDelete={() => setDeleting(s)} />}
+              />
             ))}
           </ul>
         )}
       </Card>
-      <Modal open={editing !== null} onClose={() => setEditing(null)} title={sh ? 'Ubah shift' : 'Tambah shift'} subtitle="JADWAL" size="sm"
+      <Modal open={editing !== null} onClose={() => setEditing(null)} title={sh ? 'Ubah shift' : 'Tambah shift'} size="sm"
         footer={<><Button variant="secondary" onClick={() => setEditing(null)}>Batal</Button><Button type="submit" form="shift-form" loading={busy}>Simpan</Button></>}>
-        <form id="shift-form" className="form-stack" onSubmit={save}>
-          <Field label="Nama shift" htmlFor="s-name"><input id="s-name" className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required /></Field>
-          <div className="form-row">
-            <Field label="Jam masuk" htmlFor="s-start"><input id="s-start" className="input" type="time" value={f.start_time} onChange={(e) => setF({ ...f, start_time: e.target.value })} required /></Field>
-            <Field label="Jam pulang" htmlFor="s-end"><input id="s-end" className="input" type="time" value={f.end_time} onChange={(e) => setF({ ...f, end_time: e.target.value })} required /></Field>
+        <form id="shift-form" className="grid gap-4 sm:grid-cols-2" onSubmit={save}>
+          <Field label="Nama shift" htmlFor="s-name" className="sm:col-span-2"><Input id="s-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required /></Field>
+          <Field label="Jam masuk" htmlFor="s-start"><Input id="s-start" type="time" value={f.start_time} onChange={(e) => setF({ ...f, start_time: e.target.value })} required /></Field>
+          <Field label="Jam pulang" htmlFor="s-end"><Input id="s-end" type="time" value={f.end_time} onChange={(e) => setF({ ...f, end_time: e.target.value })} required /></Field>
+          <Field label="Toleransi terlambat (menit)" htmlFor="s-tol" className="sm:col-span-2"><Input id="s-tol" type="number" min={0} max={240} value={f.late_tolerance_minutes} onChange={(e) => setF({ ...f, late_tolerance_minutes: e.target.value })} required /></Field>
+          <div className="flex items-start justify-between gap-4 rounded-lg border p-3.5 sm:col-span-2">
+            <div>
+              <Label htmlFor="s-default">Jadikan shift default</Label>
+              <p className="mt-1 text-[13px] text-muted-foreground">Dipakai karyawan yang tidak punya shift khusus.</p>
+            </div>
+            <Switch id="s-default" checked={f.is_default} onCheckedChange={(v) => setF({ ...f, is_default: v })} />
           </div>
-          <Field label="Toleransi terlambat (menit)" htmlFor="s-tol"><input id="s-tol" className="input" type="number" min={0} max={240} value={f.late_tolerance_minutes} onChange={(e) => setF({ ...f, late_tolerance_minutes: e.target.value })} required /></Field>
-          <label className="switch"><input type="checkbox" checked={f.is_default} onChange={(e) => setF({ ...f, is_default: e.target.checked })} /><span /> Jadikan shift default (untuk karyawan tanpa shift khusus)</label>
-          {error && <Alert tone="danger">{error}</Alert>}
+          {error && <div className="sm:col-span-2"><Alert tone="danger">{error}</Alert></div>}
         </form>
       </Modal>
       <ConfirmDialog open={deleting !== null} title="Hapus shift?" message={`Karyawan pada "${deleting?.name}" akan memakai shift default.`} confirmLabel="Hapus" loading={busy} onClose={() => setDeleting(null)}
@@ -232,27 +261,21 @@ function DepartmentsTab() {
 
   return (
     <>
-      <Card title="Daftar divisi" subtitle="STRUKTUR ORGANISASI" flush>
-        <form className="toolbar" onSubmit={add}>
-          <input className="input" placeholder="Nama divisi baru" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={100} aria-label="Nama divisi baru" />
-          <Button type="submit" icon={<Plus size={16} />} loading={adding}>Tambah</Button>
+      <Card title="Daftar divisi" description="Struktur organisasi untuk pengelompokan karyawan." flush>
+        <form className="flex flex-col gap-2 border-b p-4 sm:flex-row" onSubmit={add}>
+          <Input placeholder="Nama divisi baru" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={100} aria-label="Nama divisi baru" />
+          <Button type="submit" icon={<Plus />} loading={adding}>Tambah</Button>
         </form>
-        <ul className="setting-list">
+        <ul className="divide-y">
           {departments.map((d) => (
-            <li key={d.id}>
-              <span className="setting-icon"><Building2 size={18} /></span>
-              <div className="setting-main"><strong>{d.name}</strong><small>{d.members} karyawan aktif</small></div>
-              <div className="row-actions">
-                <button className="icon-btn" onClick={() => { setEditing(d); setEditName(d.name) }} aria-label={`Ubah ${d.name}`}><Pencil size={16} /></button>
-                <button className="icon-btn danger" onClick={() => setDeleting(d)} aria-label={`Hapus ${d.name}`}><Trash2 size={16} /></button>
-              </div>
-            </li>
+            <ListRow key={d.id} icon={<Building2 />} title={d.name} meta={`${d.members} karyawan aktif`}
+              menu={<RowActions label={d.name} onEdit={() => { setEditing(d); setEditName(d.name) }} onDelete={() => setDeleting(d)} />} />
           ))}
         </ul>
       </Card>
       <Modal open={editing !== null} onClose={() => setEditing(null)} title="Ubah divisi" size="sm"
         footer={<><Button variant="secondary" onClick={() => setEditing(null)}>Batal</Button><Button loading={busy} onClick={async () => { setBusy(true); try { await api(`/api/admin/departments/${editing!.id}`, { method: 'PATCH', body: { name: editName } }); toast('Divisi diperbarui.'); setEditing(null); reload() } catch (e) { toast(errorMessage(e), 'danger') } finally { setBusy(false) } }}>Simpan</Button></>}>
-        <Field label="Nama divisi" htmlFor="d-name"><input id="d-name" className="input" value={editName} onChange={(e) => setEditName(e.target.value)} /></Field>
+        <Field label="Nama divisi" htmlFor="d-name"><Input id="d-name" value={editName} onChange={(e) => setEditName(e.target.value)} /></Field>
       </Modal>
       <ConfirmDialog open={deleting !== null} title="Hapus divisi?" message={`Karyawan di divisi "${deleting?.name}" akan menjadi tanpa divisi.`} confirmLabel="Hapus" loading={busy} onClose={() => setDeleting(null)}
         onConfirm={async () => { setBusy(true); try { await api(`/api/admin/departments/${deleting!.id}`, { method: 'DELETE' }); toast('Divisi dihapus.'); setDeleting(null); reload() } catch (e) { toast(errorMessage(e), 'danger') } finally { setBusy(false) } }} />
@@ -266,20 +289,19 @@ function LogsTab() {
   const [error, setError] = useState('')
   useEffect(() => { api<Log[]>('/api/admin/audit-logs').then(setRows).catch((e) => setError(errorMessage(e))) }, [])
   return (
-    <Card title="Log aktivitas" subtitle="200 AKTIVITAS TERAKHIR" flush>
-      {error && <div className="pad"><Alert tone="danger">{error}</Alert></div>}
-      {!rows ? <div className="pad"><Skeleton rows={6} /></div> : rows.length === 0 ? <EmptyState title="Belum ada aktivitas" /> : (
-        <div className="table-wrap">
-          <table className="table">
-            <thead><tr><th>Waktu</th><th>Pengguna</th><th>Aktivitas</th><th>Objek</th><th>IP</th></tr></thead>
+    <Card title="Log aktivitas" description="200 aktivitas terakhir di sistem." flush>
+      {error && <div className="p-4"><Alert tone="danger">{error}</Alert></div>}
+      {!rows ? <div className="p-5"><Skeleton rows={6} /></div> : rows.length === 0 ? <EmptyState title="Belum ada aktivitas" /> : (
+        <div className="w-full overflow-x-auto">
+          <table className="rtable">
+            <thead><tr><th>Aktivitas</th><th>Pengguna</th><th>Objek</th><th>IP</th></tr></thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id}>
-                  <td data-label="Waktu">{dateTime(r.created_at)}</td>
-                  <td data-label="Pengguna"><span>{r.user_name ?? 'Sistem'}</span>{r.nik && <small>NIK {r.nik}</small>}</td>
-                  <td data-label="Aktivitas">{ACTION_LABEL[r.action] ?? r.action}</td>
-                  <td data-label="Objek">{r.entity ? `${r.entity} #${r.entity_id ?? ''}` : '—'}</td>
-                  <td data-label="IP"><code className="mono">{r.ip ?? '—'}</code></td>
+                  <td data-primary><span className="font-medium">{ACTION_LABEL[r.action] ?? r.action}</span><span className="sub">{dateTime(r.created_at)}</span></td>
+                  <td data-label="Pengguna">{r.user_name ?? 'Sistem'}</td>
+                  <td data-label="Objek" className="text-muted-foreground">{r.entity ? `${r.entity} #${r.entity_id ?? ''}` : '—'}</td>
+                  <td data-label="IP"><code className="font-mono text-xs">{r.ip ?? '—'}</code></td>
                 </tr>
               ))}
             </tbody>

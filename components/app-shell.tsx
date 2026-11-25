@@ -1,19 +1,24 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  CalendarCheck2, ChevronDown, Fingerprint, House, KeyRound, LayoutDashboard, LogOut, Moon,
+  CalendarCheck2, ChevronsUpDown, Fingerprint, House, KeyRound, LayoutDashboard, LogOut, Moon,
   Settings, Sun, UserRound, Users,
 } from 'lucide-react'
 import { api } from '@/lib/client'
-import { Avatar, ToastProvider } from './ui'
+import { cn } from '@/lib/utils'
+import { Avatar, ToastProvider } from './kit'
+import { Button } from './ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu'
+import { Tip } from './ui/misc'
 
 type Role = 'admin' | 'employee'
 export type ShellUser = { name: string; nik: string; subtitle: string; canAttend?: boolean }
+type NavItem = { href: string; label: string; icon: typeof House; exact?: boolean }
 
-const NAV: Record<Role, { href: string; label: string; icon: typeof House; exact?: boolean }[]> = {
+const NAV: Record<Role, NavItem[]> = {
   employee: [
     { href: '/karyawan', label: 'Beranda', icon: House, exact: true },
     { href: '/karyawan/riwayat', label: 'Riwayat', icon: CalendarCheck2 },
@@ -29,9 +34,7 @@ const NAV: Record<Role, { href: string; label: string; icon: typeof House; exact
 
 function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
-  useEffect(() => {
-    setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light')
-  }, [])
+  useEffect(() => { setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light') }, [])
   const toggle = () => {
     const next = theme === 'light' ? 'dark' : 'light'
     setTheme(next)
@@ -41,28 +44,25 @@ function useTheme() {
   return { theme, toggle }
 }
 
+function Logo({ size = 32 }: { size?: number }) {
+  return (
+    <span className="brand-mark" style={{ width: size, height: size }}>
+      <img src="/logo-mark.png" alt="Logo PT Pandawa Amerta Packindo" width={512} height={512} decoding="async" />
+    </span>
+  )
+}
+
 export function AppShell({ role, user, children }: { role: Role; user: ShellUser; children: ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { theme, toggle } = useTheme()
-  const [menuOpen, setMenuOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const items = role === 'admin' && user.canAttend
+  const items: NavItem[] = role === 'admin' && user.canAttend
     ? [NAV.admin[0], { href: '/admin/absen', label: 'Absen saya', icon: Fingerprint }, ...NAV.admin.slice(1)]
     : NAV[role]
   const profileHref = role === 'admin' ? '/admin/profil' : '/karyawan/profil'
-  const active = (href: string, exact?: boolean) => (exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`))
-  const current = items.find((i) => active(i.href, i.exact))?.label ?? (pathname.endsWith('/profil') ? 'Profil' : '')
-
-  useEffect(() => {
-    if (!menuOpen) return
-    const close = (e: MouseEvent) => { if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false) }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [menuOpen])
-
-  useEffect(() => setMenuOpen(false), [pathname])
+  const isActive = (href: string, exact?: boolean) => (exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`))
+  const current = items.find((i) => isActive(i.href, i.exact))?.label ?? (pathname.endsWith('/profil') ? 'Profil' : '')
 
   const logout = async () => {
     setLoggingOut(true)
@@ -70,71 +70,120 @@ export function AppShell({ role, user, children }: { role: Role; user: ShellUser
     window.location.href = '/login'
   }
 
+  const userMenu = (
+    <DropdownMenuContent align="end" className="w-60">
+      <DropdownMenuLabel className="font-normal">
+        <p className="truncate font-medium">{user.name}</p>
+        <p className="truncate text-xs text-muted-foreground">{user.subtitle}</p>
+      </DropdownMenuLabel>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onSelect={() => router.push(profileHref)}><UserRound /> Profil saya</DropdownMenuItem>
+      {role === 'admin' && <DropdownMenuItem onSelect={() => router.push(`${profileHref}#keamanan`)}><KeyRound /> Ganti kata sandi</DropdownMenuItem>}
+      <DropdownMenuItem onSelect={toggle}>{theme === 'light' ? <Moon /> : <Sun />} {theme === 'light' ? 'Mode gelap' : 'Mode terang'}</DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem variant="destructive" disabled={loggingOut} onSelect={logout}><LogOut /> {loggingOut ? 'Keluar…' : 'Keluar'}</DropdownMenuItem>
+    </DropdownMenuContent>
+  )
+
   return (
     <ToastProvider>
-      <div className="shell">
-        <aside className="sidebar" aria-label="Navigasi utama">
-          <Link href={items[0].href} className="brand">
-            <span className="brand-mark"><img src="/logo-mark.png" alt="Logo PT Pandawa Amerta Packindo" width={512} height={512} decoding="async" /></span>
-            <span className="brand-text"><strong>PAP <em>Attendance</em></strong><small>{role === 'admin' ? 'Panel Admin' : 'Portal Karyawan'}</small></span>
+      <div className="min-h-dvh">
+        {/* Sidebar: ikon saja di tablet (md), penuh mulai laptop (lg) */}
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[72px] flex-col border-r bg-sidebar md:flex lg:w-60 xl:w-64" aria-label="Navigasi utama">
+          <Link href={items[0].href} className="flex h-16 items-center gap-3 border-b px-[18px] lg:px-5">
+            <Logo size={36} />
+            <span className="hidden min-w-0 leading-tight lg:block">
+              <span className="block truncate text-[15px] font-semibold">PAP Attendance</span>
+              <span className="block truncate text-xs text-muted-foreground">{role === 'admin' ? 'Panel Admin' : 'Portal Karyawan'}</span>
+            </span>
           </Link>
-          <span className="nav-label">Menu</span>
-          <nav className="side-nav">
-            {items.map(({ href, label, icon: Icon, exact }) => (
-              <Link key={href} href={href} className={`side-link ${active(href, exact) ? 'active' : ''}`} title={label} aria-current={active(href, exact) ? 'page' : undefined}>
-                <Icon size={19} strokeWidth={1.9} /><span>{label}</span>
-              </Link>
-            ))}
+
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+            {items.map(({ href, label, icon: Icon, exact }) => {
+              const active = isActive(href, exact)
+              const cls = cn(
+                'flex h-10 items-center justify-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:justify-start',
+                active && 'bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary',
+              )
+              return (
+                <div key={href}>
+                  <div className="lg:hidden">
+                    <Tip label={label} side="right">
+                      <Link href={href} aria-current={active ? 'page' : undefined} aria-label={label} className={cls}><Icon className="size-[18px] shrink-0" /></Link>
+                    </Tip>
+                  </div>
+                  <Link href={href} aria-current={active ? 'page' : undefined} className={cn(cls, 'hidden lg:flex')}>
+                    <Icon className="size-[18px] shrink-0" />
+                    <span className="truncate">{label}</span>
+                  </Link>
+                </div>
+              )
+            })}
           </nav>
-          <div className="sidebar-foot">
-            <Link href={profileHref} className="side-profile" title="Profil">
-              <Avatar name={user.name} size={36} />
-              <span><strong>{user.name}</strong><small>{user.subtitle}</small></span>
-            </Link>
-            <button type="button" className="side-link side-logout" onClick={logout} disabled={loggingOut} title="Keluar">
-              <LogOut size={19} strokeWidth={1.9} /><span>{loggingOut ? 'Keluar…' : 'Keluar'}</span>
-            </button>
+
+          <div className="border-t p-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex w-full items-center justify-center gap-3 rounded-md p-1.5 text-left outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/40 lg:justify-start lg:p-2" aria-label="Menu akun">
+                  <Avatar name={user.name} size={34} />
+                  <span className="hidden min-w-0 flex-1 leading-tight lg:block">
+                    <span className="block truncate text-sm font-medium">{user.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{user.subtitle}</span>
+                  </span>
+                  <ChevronsUpDown className="hidden size-4 text-muted-foreground lg:block" />
+                </button>
+              </DropdownMenuTrigger>
+              {userMenu}
+            </DropdownMenu>
           </div>
         </aside>
 
-        <div className="main">
-          <header className="topbar">
-            <Link href={items[0].href} className="topbar-brand" aria-label="Beranda">
-              <span className="brand-mark"><img src="/logo-mark.png" alt="Logo PT Pandawa Amerta Packindo" width={512} height={512} decoding="async" /></span>
-              <strong>PAP <em>Attendance</em></strong>
+        <div className="flex min-h-dvh flex-col md:pl-[72px] lg:pl-60 xl:pl-64">
+          <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/85 px-4 backdrop-blur sm:px-6 md:h-16 lg:px-8">
+            <Link href={items[0].href} className="flex items-center gap-2.5 md:hidden">
+              <Logo size={30} />
+              <span className="text-[15px] font-semibold">PAP Attendance</span>
             </Link>
-            <div className="crumbs"><span>{role === 'admin' ? 'Admin' : 'Karyawan'}</span><span className="crumb-sep">/</span><strong>{current}</strong></div>
-            <div className="topbar-actions">
-              <span className={`role-chip role-${role}`}>{role === 'admin' ? 'Admin' : 'Karyawan'}</span>
-              <button type="button" className="icon-btn" onClick={toggle} aria-label={theme === 'light' ? 'Aktifkan mode gelap' : 'Aktifkan mode terang'} title="Ganti tema">
-                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-              </button>
-              <div className="user-menu" ref={menuRef}>
-                <button type="button" className="user-trigger" onClick={() => setMenuOpen((v) => !v)} aria-expanded={menuOpen} aria-haspopup="menu">
-                  <Avatar name={user.name} size={32} />
-                  <span className="user-trigger-name">{user.name.split(' ')[0]}</span>
-                  <ChevronDown size={15} />
-                </button>
-                {menuOpen && (
-                  <div className="dropdown" role="menu">
-                    <div className="dropdown-head"><strong>{user.name}</strong><small>NIK {user.nik}</small></div>
-                    <button type="button" role="menuitem" onClick={() => router.push(profileHref)}><UserRound size={16} /> Profil saya</button>
-                    {role === 'admin' && <button type="button" role="menuitem" onClick={() => router.push(`${profileHref}#keamanan`)}><KeyRound size={16} /> Ganti kata sandi</button>}
-                    <button type="button" role="menuitem" className="danger" onClick={logout} disabled={loggingOut}><LogOut size={16} /> Keluar</button>
-                  </div>
-                )}
-              </div>
+            <div className="hidden min-w-0 items-center gap-2 text-sm md:flex">
+              <span className="text-muted-foreground">{role === 'admin' ? 'Admin' : 'Karyawan'}</span>
+              <span className="text-muted-foreground/50">/</span>
+              <span className="truncate font-medium">{current}</span>
+            </div>
+            <div className="ml-auto flex items-center gap-1.5">
+              <Tip label={theme === 'light' ? 'Mode gelap' : 'Mode terang'}>
+                <Button variant="ghost" size="icon" onClick={toggle} aria-label={theme === 'light' ? 'Aktifkan mode gelap' : 'Aktifkan mode terang'} className="hidden sm:inline-flex">
+                  {theme === 'light' ? <Moon /> : <Sun />}
+                </Button>
+              </Tip>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 md:hidden" aria-label="Menu akun">
+                    <Avatar name={user.name} size={32} />
+                  </button>
+                </DropdownMenuTrigger>
+                {userMenu}
+              </DropdownMenu>
             </div>
           </header>
-          <main className="content" id="konten">{children}</main>
+
+          <main id="konten" className="mx-auto w-full max-w-7xl flex-1 px-4 pt-5 pb-28 sm:px-6 md:pb-10 lg:px-8 lg:pt-8 2xl:max-w-[88rem]">
+            {children}
+          </main>
         </div>
 
-        <nav className="bottom-nav" aria-label="Navigasi">
-          {items.map(({ href, label, icon: Icon, exact }) => (
-            <Link key={href} href={href} className={active(href, exact) ? 'active' : ''} aria-current={active(href, exact) ? 'page' : undefined}>
-              <Icon size={20} strokeWidth={1.9} /><span>{label}</span>
-            </Link>
-          ))}
+        {/* Navigasi bawah untuk HP */}
+        <nav aria-label="Navigasi" className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+          <div className="mx-auto flex max-w-lg items-stretch justify-around px-2 py-1.5">
+            {items.map(({ href, label, icon: Icon, exact }) => {
+              const active = isActive(href, exact)
+              return (
+                <Link key={href} href={href} aria-current={active ? 'page' : undefined} className={cn('flex min-w-0 flex-1 flex-col items-center gap-1 rounded-md px-1 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors', active && 'text-primary')}>
+                  <span className={cn('grid h-7 w-12 place-items-center rounded-full transition-colors', active && 'bg-primary/10')}><Icon className="size-[19px]" /></span>
+                  <span className="max-w-full truncate">{label}</span>
+                </Link>
+              )
+            })}
+          </div>
         </nav>
       </div>
     </ToastProvider>

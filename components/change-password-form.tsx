@@ -3,7 +3,9 @@
 import { useState, type FormEvent } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { api, errorMessage } from '@/lib/client'
-import { Alert, Button, Field } from './ui'
+import { cn } from '@/lib/utils'
+import { Alert, Button, Field } from './kit'
+import { Input } from './ui/input'
 
 function strength(pw: string) {
   let s = 0
@@ -14,6 +16,8 @@ function strength(pw: string) {
   if (/[^A-Za-z0-9]/.test(pw)) s++
   return Math.min(4, s)
 }
+const LEVEL = ['Sangat lemah', 'Lemah', 'Cukup', 'Kuat', 'Sangat kuat']
+const BAR = ['bg-destructive', 'bg-destructive', 'bg-warning', 'bg-success', 'bg-success']
 
 export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
   const [current, setCurrent] = useState('')
@@ -45,23 +49,30 @@ export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
 
   const type = show ? 'text' : 'password'
   return (
-    <form className="form-stack" onSubmit={submit}>
+    <form className="grid gap-4" onSubmit={submit}>
       <Field label="Kata sandi saat ini" htmlFor="pw-current">
-        <input id="pw-current" className="input" type={type} autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
+        <Input id="pw-current" type={type} autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
       </Field>
       <Field label="Kata sandi baru" htmlFor="pw-new" hint="Minimal 8 karakter, kombinasi huruf dan angka.">
-        <div className="input-group">
-          <input id="pw-new" className="input" type={type} autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} required minLength={8} />
-          <button type="button" className="input-addon" onClick={() => setShow((v) => !v)} aria-label={show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}>{show ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+        <div className="relative">
+          <Input id="pw-new" type={type} autoComplete="new-password" className="pr-11" value={next} onChange={(e) => setNext(e.target.value)} required minLength={8} />
+          <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'} className="absolute top-1/2 right-1.5 grid size-7 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground">
+            {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
         </div>
-        {next && <div className="strength" data-score={score}><span /><span /><span /><span /><small>{['Sangat lemah', 'Lemah', 'Cukup', 'Kuat', 'Sangat kuat'][score]}</small></div>}
+        {next && (
+          <div className="flex items-center gap-1.5" aria-live="polite">
+            {[0, 1, 2, 3].map((i) => <span key={i} className={cn('h-1 flex-1 rounded-full bg-muted', i < Math.max(1, score) && BAR[score])} />)}
+            <span className="ml-2 w-24 text-xs text-muted-foreground">{LEVEL[score]}</span>
+          </div>
+        )}
       </Field>
       <Field label="Ulangi kata sandi baru" htmlFor="pw-confirm">
-        <input id="pw-confirm" className="input" type={type} autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+        <Input id="pw-confirm" type={type} autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
       </Field>
       {error && <Alert tone="danger">{error}</Alert>}
-      {success && <Alert tone="success">Kata sandi berhasil diperbarui. Sesi di perangkat lain telah dikeluarkan.</Alert>}
-      <Button type="submit" loading={loading}>Simpan kata sandi</Button>
+      {success && <Alert tone="success">Kata sandi diperbarui. Sesi di perangkat lain telah dikeluarkan.</Alert>}
+      <Button type="submit" loading={loading} className="w-full sm:w-auto sm:justify-self-start">Simpan kata sandi</Button>
     </form>
   )
 }

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Camera, CheckCircle2, LocateFixed, MapPin, RefreshCw, ShieldCheck } from 'lucide-react'
 import { api, errorMessage } from '@/lib/client'
-import { Alert, Button, Modal } from '../ui'
+import { cn } from '@/lib/utils'
+import { Alert, Button, Modal } from '../kit'
 
 export type Office = { id: number; name: string; address: string | null; latitude: number; longitude: number; radius_m: number }
 type Position = { lat: number; lng: number; accuracy: number }
@@ -23,8 +24,13 @@ export function nearest(offices: Office[], pos: Position | null) {
 }
 
 export function CameraCheck({ mode, offices, open, onClose, onSuccess }: { mode: 'in' | 'out'; offices: Office[]; open: boolean; onClose: () => void; onSuccess: (message: string) => void }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  // Callback ref: elemen video di dalam portal dialog bisa muncul setelah stream siap.
+  const attachVideo = useCallback((el: HTMLVideoElement | null) => {
+    videoRef.current = el
+    if (el && streamRef.current && el.srcObject !== streamRef.current) el.srcObject = streamRef.current
+  }, [])
   const [photo, setPhoto] = useState<string | null>(null)
   const [cameraError, setCameraError] = useState('')
   const [pos, setPos] = useState<Position | null>(null)
@@ -113,45 +119,54 @@ export function CameraCheck({ mode, offices, open, onClose, onSuccess }: { mode:
     }
   }
 
+  const gpsTone = !pos ? 'idle' : offices.length === 0 ? 'warn' : inside ? 'ok' : 'bad'
   return (
-    <Modal open={open} onClose={onClose} title={mode === 'in' ? 'Check-in kehadiran' : 'Check-out pulang'} subtitle="Verifikasi foto & lokasi" size="md">
-      <div className="camera-box">
+    <Modal open={open} onClose={onClose} title={mode === 'in' ? 'Check-in kehadiran' : 'Check-out'} description="Ambil foto wajah, lokasi Anda diverifikasi otomatis." size="md">
+      <div className="relative mx-auto grid aspect-square max-h-[48dvh] w-full max-w-sm place-items-center overflow-hidden rounded-xl bg-zinc-900 sm:max-w-none">
         {photo ? (
-          <img src={photo} alt="Foto verifikasi yang diambil" className="camera-media" />
+          <img src={photo} alt="Foto verifikasi yang diambil" className="size-full object-cover" />
         ) : cameraError ? (
-          <div className="camera-error"><Camera size={26} /><p>{cameraError}</p><Button variant="secondary" icon={<RefreshCw size={15} />} onClick={() => setAttempt((a) => a + 1)}>Coba lagi</Button></div>
+          <div className="grid max-w-72 justify-items-center gap-3 p-6 text-center text-sm text-zinc-200">
+            <Camera className="size-7" />
+            <p>{cameraError}</p>
+            <Button variant="secondary" size="sm" icon={<RefreshCw />} onClick={() => setAttempt((a) => a + 1)}>Coba lagi</Button>
+          </div>
         ) : (
-          <video ref={videoRef} autoPlay playsInline muted className="camera-media mirror" aria-label="Pratinjau kamera" />
+          <video ref={attachVideo} autoPlay playsInline muted className="size-full -scale-x-100 object-cover" aria-label="Pratinjau kamera" />
         )}
-        {!photo && !cameraError && <div className="camera-guide" aria-hidden="true" />}
-        <span className="camera-tag">{photo ? <><CheckCircle2 size={14} /> Foto siap</> : 'Posisikan wajah di dalam bingkai'}</span>
+        {!photo && !cameraError && <div aria-hidden="true" className="pointer-events-none absolute inset-x-[22%] top-[13%] bottom-[17%] rounded-[50%] border-2 border-dashed border-white/60" />}
+        {(photo || !cameraError) && <span className="absolute bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium whitespace-nowrap text-white">
+          {photo ? <><CheckCircle2 className="size-3.5" /> Foto siap</> : 'Posisikan wajah di dalam bingkai'}
+        </span>}
       </div>
 
-      <div className={`gps-row ${pos ? (offices.length === 0 ? 'gps-warn' : inside ? 'gps-ok' : 'gps-bad') : ''}`}>
-        <span className="gps-icon">{pos ? <MapPin size={18} /> : <LocateFixed size={18} className="pulse" />}</span>
-        <div>
-          <strong>
+      <div className={cn('flex items-center gap-3 rounded-lg border px-3.5 py-3', gpsTone === 'ok' && 'border-success/30 bg-success/5', gpsTone === 'bad' && 'border-destructive/30 bg-destructive/5', gpsTone === 'warn' && 'border-warning/30 bg-warning/5')}>
+        <span className={cn('grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground', gpsTone === 'ok' && 'bg-success text-white', gpsTone === 'bad' && 'bg-destructive text-white', gpsTone === 'warn' && 'bg-warning text-white')}>
+          {pos ? <MapPin className="size-4" /> : <LocateFixed className="size-4 animate-pulse" />}
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-medium">
             {gpsError ? 'Lokasi tidak tersedia' : !pos ? 'Mencari lokasi Anda…' : offices.length === 0 ? 'Lokasi kantor belum diatur' : inside ? `Di area ${near!.name}` : `Di luar area kantor`}
-          </strong>
-          <small>
+          </p>
+          <p className="text-xs text-muted-foreground">
             {gpsError || (!pos ? 'Pastikan GPS aktif dan izin lokasi diberikan.' : near ? `Jarak ${near.distance} m · radius ${near.radius_m} m · akurasi ±${Math.round(pos.accuracy)} m` : `Akurasi ±${Math.round(pos.accuracy)} m`)}
-          </small>
+          </p>
         </div>
       </div>
 
       {error && <Alert tone="danger">{error}</Alert>}
 
-      <div className="camera-actions">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row">
         {photo ? (
           <>
-            <Button variant="secondary" icon={<RefreshCw size={16} />} onClick={() => { setPhoto(null); setError('') }} disabled={submitting}>Ulangi foto</Button>
-            <Button onClick={submit} loading={submitting} disabled={!pos} icon={<ShieldCheck size={16} />}>{mode === 'in' ? 'Kirim check-in' : 'Kirim check-out'}</Button>
+            <Button variant="secondary" size="lg" className="h-11 sm:flex-1" icon={<RefreshCw />} onClick={() => { setPhoto(null); setError('') }} disabled={submitting}>Ulangi foto</Button>
+            <Button size="lg" className="h-11 sm:flex-1" onClick={submit} loading={submitting} disabled={!pos} icon={<ShieldCheck />}>{mode === 'in' ? 'Kirim check-in' : 'Kirim check-out'}</Button>
           </>
         ) : (
-          <Button onClick={capture} disabled={Boolean(cameraError)} icon={<Camera size={16} />} className="btn-block">Ambil foto</Button>
+          <Button size="lg" className="h-11 w-full" onClick={capture} disabled={Boolean(cameraError)} icon={<Camera />}>Ambil foto</Button>
         )}
       </div>
-      <p className="fine-print"><ShieldCheck size={13} /> Foto & lokasi hanya digunakan untuk verifikasi absensi dan disimpan secara aman.</p>
+      <p className="text-center text-xs text-muted-foreground">Foto dan lokasi hanya digunakan untuk verifikasi absensi.</p>
     </Modal>
   )
 }

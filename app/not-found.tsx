@@ -1,13 +1,14 @@
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 export default function NotFound() {
   return (
-    <main className="login-main" style={{ minHeight: '100dvh' }}>
-      <div className="login-card" style={{ textAlign: 'center', justifyItems: 'center' }}>
-        <span className="eyebrow">ERROR 404</span>
-        <h2>Halaman tidak ditemukan</h2>
-        <p className="muted-text">Alamat yang Anda buka tidak tersedia atau sudah dipindahkan.</p>
-        <Link href="/" className="btn btn-primary" style={{ marginTop: 12 }}>Kembali ke beranda</Link>
+    <main className="grid min-h-dvh place-items-center bg-background px-6">
+      <div className="max-w-sm text-center">
+        <p className="text-sm font-medium text-primary">404</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight">Halaman tidak ditemukan</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Alamat yang Anda buka tidak tersedia atau sudah dipindahkan.</p>
+        <Button asChild className="mt-6"><Link href="/">Kembali ke beranda</Link></Button>
       </div>
     </main>
   )
