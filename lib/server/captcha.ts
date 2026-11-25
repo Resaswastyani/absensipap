@@ -28,7 +28,7 @@ const digest = (answer: string, nonce: string) => createHash('sha256').update(`$
 
 /** Buat gambar CAPTCHA baru; jawabannya disimpan ter-hash di cookie bertanda tangan. */
 export async function createCaptcha() {
-  const c = svgCaptcha.create({ size: 5, charPreset: CHARSET, noise: 2, color: true, width: 180, height: 56, fontSize: 52, background: '#ffffff' })
+  const c = svgCaptcha.create({ size: 5, charPreset: CHARSET, noise: 1, color: true, width: 200, height: 60, fontSize: 60, background: '#ffffff' })
   const nonce = randomBytes(16).toString('hex')
   const token = await new SignJWT({ h: digest(c.text, nonce).toString('base64url'), n: nonce })
     .setProtectedHeader({ alg: 'HS256' })

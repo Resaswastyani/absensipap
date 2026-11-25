@@ -103,7 +103,7 @@ export default function LoginForm({ recaptchaSiteKey = '' }: { recaptchaSiteKey?
               <label htmlFor="captcha">Kode CAPTCHA</label>
               <div className="captcha-row">
                 <div className="captcha-img">
-                  {captchaKey ? <img src={`/api/captcha?r=${captchaKey}`} alt="Gambar kode CAPTCHA" width={180} height={56} /> : <span className="skeleton" />}
+                  {captchaKey ? <img src={`/api/captcha?r=${captchaKey}`} alt="Gambar kode CAPTCHA" width={200} height={60} /> : <span className="skeleton" />}
                 </div>
                 <button type="button" className="captcha-refresh" onClick={refreshCaptcha} aria-label="Ganti gambar CAPTCHA" title="Ganti gambar"><RefreshCw size={17} /></button>
               </div>
