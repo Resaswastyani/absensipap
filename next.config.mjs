@@ -34,7 +34,7 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   images: { unoptimized: true },
-  serverExternalPackages: ['mysql2', 'bcryptjs'],
+  serverExternalPackages: ['mysql2', 'bcryptjs', 'svg-captcha'],
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },

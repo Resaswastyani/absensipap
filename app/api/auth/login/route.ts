@@ -3,23 +3,26 @@ import { z } from 'zod'
 import { ApiError, audit, clientIp, ok, parseBody, publicRoute } from '@/lib/server/api'
 import { createSessionCookie } from '@/lib/server/auth'
 import { execute, queryOne } from '@/lib/server/db'
+import { verifyCaptcha } from '@/lib/server/captcha'
 import { verifyRecaptcha } from '@/lib/server/recaptcha'
 
 const schema = z.object({
   email: z.string().trim().toLowerCase().min(1, 'Email wajib diisi.').max(150).email('Format email tidak valid.'),
   password: z.string().min(1, 'Kata sandi wajib diisi.').max(200),
   recaptchaToken: z.string().max(4000).optional(),
+  captcha: z.string().trim().max(12).optional(),
 })
 
 // Hash tiruan agar waktu respons sama saat akun tidak ditemukan.
 const DUMMY_HASH = bcrypt.hashSync('pap-dummy-password-for-timing', 12)
 
 export const POST = publicRoute(async (req) => {
-  const { email, password, recaptchaToken } = await parseBody(req, schema)
+  const { email, password, recaptchaToken, captcha } = await parseBody(req, schema)
   const ip = clientIp(req)
   const id = email
 
-  // Cek bot dulu sebelum menyentuh database / bcrypt.
+  // Cek bot dulu sebelum menyentuh database / bcrypt: kode gambar, lalu reCAPTCHA v3.
+  await verifyCaptcha(captcha)
   await verifyRecaptcha(recaptchaToken, 'login', ip)
 
   const attempts = await queryOne<{ byId: number; byIp: number }>(

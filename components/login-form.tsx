@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import Script from 'next/script'
-import { ArrowRight, Camera, Eye, EyeOff, LockKeyhole, Mail, MapPin, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Camera, Eye, EyeOff, LockKeyhole, Mail, MapPin, RefreshCw, ShieldCheck } from 'lucide-react'
 import { api, errorMessage } from '@/lib/client'
 import { Alert } from './ui'
 
@@ -33,6 +33,11 @@ export default function LoginForm({ recaptchaSiteKey = '' }: { recaptchaSiteKey?
   const [show, setShow] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [captcha, setCaptcha] = useState('')
+  // 0 = belum dimuat (hindari beda render server/klien); diisi saat komponen tampil.
+  const [captchaKey, setCaptchaKey] = useState(0)
+  const refreshCaptcha = () => { setCaptcha(''); setCaptchaKey(Date.now()) }
+  useEffect(() => { setCaptchaKey(Date.now()) }, [])
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -40,11 +45,13 @@ export default function LoginForm({ recaptchaSiteKey = '' }: { recaptchaSiteKey?
     setLoading(true)
     try {
       const recaptchaToken = await getRecaptchaToken(recaptchaSiteKey)
-      const res = await api<{ redirect: string }>('/api/auth/login', { method: 'POST', body: { email, password, recaptchaToken } })
+      const res = await api<{ redirect: string }>('/api/auth/login', { method: 'POST', body: { email, password, recaptchaToken, captcha } })
       window.location.href = res.redirect
     } catch (err) {
       setError(errorMessage(err))
       setLoading(false)
+      // Kode CAPTCHA sekali pakai: selalu minta gambar baru setelah gagal.
+      refreshCaptcha()
     }
   }
 
@@ -91,8 +98,23 @@ export default function LoginForm({ recaptchaSiteKey = '' }: { recaptchaSiteKey?
                 <button type="button" className="input-addon" onClick={() => setShow((v) => !v)} aria-label={show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}>{show ? <EyeOff size={16} /> : <Eye size={16} />}</button>
               </div>
             </div>
+            <fieldset className="captcha-box">
+              <legend>Verifikasi keamanan</legend>
+              <label htmlFor="captcha">Kode CAPTCHA</label>
+              <div className="captcha-row">
+                <div className="captcha-img">
+                  {captchaKey ? <img src={`/api/captcha?r=${captchaKey}`} alt="Gambar kode CAPTCHA" width={180} height={56} /> : <span className="skeleton" />}
+                </div>
+                <button type="button" className="captcha-refresh" onClick={refreshCaptcha} aria-label="Ganti gambar CAPTCHA" title="Ganti gambar"><RefreshCw size={17} /></button>
+              </div>
+              <div className="input-icon">
+                <ShieldCheck size={17} />
+                <input id="captcha" className="input captcha-input" autoComplete="off" autoCapitalize="characters" autoCorrect="off" spellCheck={false} maxLength={8} placeholder="Kode CAPTCHA" value={captcha} onChange={(e) => setCaptcha(e.target.value.toUpperCase())} required aria-describedby="captcha-hint" />
+              </div>
+              <small id="captcha-hint" className="field-hint">Masukkan karakter CAPTCHA sesuai gambar di atas.</small>
+            </fieldset>
             {error && <Alert tone="danger">{error}</Alert>}
-            <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={loading || !email.trim() || !password}>
+            <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={loading || !email.trim() || !password || captcha.trim().length < 5}>
               {loading ? 'Memverifikasi…' : 'Masuk'} <ArrowRight size={17} />
             </button>
           </form>
