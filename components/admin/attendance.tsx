@@ -37,6 +37,12 @@ export function AdminAttendance() {
   const [exportOpen, setExportOpen] = useState(false)
   const [exportMonth, setExportMonth] = useState(currentMonth())
 
+  // Filter awal dari URL, mis. /admin/absensi?status=terlambat (dari kartu di dashboard)
+  useEffect(() => {
+    const s = new URLSearchParams(window.location.search).get('status')
+    if (s && ['hadir', 'terlambat', 'izin', 'belum'].includes(s)) setStatus(s)
+  }, [])
+
   const load = useCallback(async () => {
     const p = new URLSearchParams({ date, q })
     if (dept) p.set('department', dept)

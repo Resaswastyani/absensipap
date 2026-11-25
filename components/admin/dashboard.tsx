@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, CalendarCheck2, Clock3, FileText, UserX, Users } from 'lucide-react'
+import { ArrowRight, CalendarCheck2 } from 'lucide-react'
 import { api, errorMessage } from '@/lib/client'
 import { dayName, hm, longDate } from '@/lib/format'
-import { Alert, Avatar, Card, EmptyState, PageHeader, Skeleton, StatCard, StatusBadge } from '../kit'
+import { cn } from '@/lib/utils'
+import { Alert, Avatar, Card, EmptyState, PageHeader, Skeleton, StatusBadge } from '../kit'
 import { Button } from '../ui/button'
+import { Card as UICard } from '../ui/card'
+import { Skeleton as Bone } from '../ui/misc'
 
 type Dashboard = {
   date: string
@@ -22,6 +25,64 @@ function addDays(date: string, n: number) {
   const d = new Date(`${date}T00:00:00Z`)
   d.setUTCDate(d.getUTCDate() + n)
   return d.toISOString().slice(0, 10)
+}
+
+type Totals = Dashboard['totals']
+
+/** Ringkasan kehadiran hari ini: persentase utama, bar komposisi, dan status yang bisa diklik. */
+function TodaySummary({ totals, present, rate }: { totals?: Totals; present: number; rate: number }) {
+  const total = totals?.total ?? 0
+  const items = [
+    { key: 'hadir', label: 'Tepat waktu', value: totals?.hadir ?? 0, bar: 'bg-success', dot: 'bg-success' },
+    { key: 'terlambat', label: 'Terlambat', value: totals?.terlambat ?? 0, bar: 'bg-warning', dot: 'bg-warning' },
+    { key: 'izin', label: 'Izin / sakit / cuti', value: totals?.izin ?? 0, bar: 'bg-info', dot: 'bg-info' },
+    { key: 'belum', label: 'Belum hadir', value: totals?.belum ?? 0, bar: 'bg-muted-foreground/25', dot: 'bg-muted-foreground/50' },
+  ]
+  const pct = (v: number) => (total ? Math.round((v / total) * 100) : 0)
+
+  return (
+    <UICard className="p-5 sm:p-6">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch lg:gap-8">
+        <div className="shrink-0 lg:w-60 lg:border-r lg:pr-8">
+          <p className="text-sm text-muted-foreground">Kehadiran hari ini</p>
+          {totals ? (
+            <>
+              <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums sm:text-5xl">{rate}<span className="text-2xl text-muted-foreground sm:text-3xl">%</span></p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground tabular-nums">{present}</span> dari <span className="tabular-nums">{total}</span> karyawan sudah hadir
+              </p>
+            </>
+          ) : (
+            <div className="mt-2 grid gap-2"><Bone className="h-11 w-24" /><Bone className="h-4 w-40" /></div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full bg-muted" role="img" aria-label={items.map((i) => `${i.label} ${i.value}`).join(', ')}>
+            {totals && total > 0 && items.map((i) => i.value > 0 && (
+              <span key={i.key} className={cn('h-full transition-[width] duration-500 first:rounded-l-full last:rounded-r-full', i.bar)} style={{ width: `${(i.value / total) * 100}%` }} />
+            ))}
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
+            {items.map((i) => (
+              <Link key={i.key} href={`/admin/absensi?status=${i.key}`}
+                className="group rounded-lg border px-3.5 py-3 transition-colors hover:border-primary/40 hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none">
+                <span className="flex items-center gap-2 text-[13px] text-muted-foreground">
+                  <span className={cn('size-2 shrink-0 rounded-full', i.dot)} />
+                  <span className="truncate">{i.label}</span>
+                </span>
+                <span className="mt-1.5 flex items-baseline justify-between gap-2">
+                  <span className="text-2xl font-semibold tracking-tight tabular-nums">{totals ? i.value : '–'}</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">{totals ? `${pct(i.value)}%` : ''}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </UICard>
+  )
 }
 
 export function AdminDashboard({ adminName }: { adminName: string }) {
@@ -45,7 +106,7 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
     <div className="grid grid-cols-1 gap-6">
       <PageHeader
         title={`Halo, ${adminName.split(' ')[0]}`}
-        description={data ? `Ringkasan kehadiran karyawan · ${longDate(data.date)}` : 'Ringkasan kehadiran karyawan hari ini.'}
+        description={data ? longDate(data.date) : ' '}
         actions={<Button asChild><Link href="/admin/absensi"><CalendarCheck2 /> Rekap absensi</Link></Button>}
       />
 
@@ -54,13 +115,7 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
         <Alert tone="warning">Lokasi kantor belum diatur, karyawan belum dapat check-in. <Link href="/admin/pengaturan" className="font-medium underline underline-offset-2">Atur lokasi</Link></Alert>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
-        <StatCard label="Total karyawan" value={t?.total ?? '–'} unit="orang" tone="primary" icon={<Users />} />
-        <StatCard label="Hadir" value={t ? present : '–'} unit="orang" tone="success" icon={<CalendarCheck2 />} hint={t ? `${rate}% kehadiran` : undefined} />
-        <StatCard label="Terlambat" value={t?.terlambat ?? '–'} unit="orang" tone="warning" icon={<Clock3 />} />
-        <StatCard label="Izin / sakit / cuti" value={t?.izin ?? '–'} unit="orang" tone="info" icon={<FileText />} />
-        <StatCard label="Belum hadir" value={t?.belum ?? '–'} unit="orang" tone="danger" icon={<UserX />} className="col-span-2 md:col-span-1" />
-      </div>
+      <TodaySummary totals={t} present={present} rate={rate} />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card title="Tren 7 hari" description="Jumlah karyawan hadir per hari" className="xl:col-span-2">
