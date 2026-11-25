@@ -648,7 +648,8 @@ textarea.input { height: auto; padding: 10px 12px; resize: vertical; min-height:
 /* reCAPTCHA v3 */
 .recaptcha-note { text-align: center; color: var(--text-3); font-size: 11.5px; margin-top: 4px; }
 .recaptcha-note a { color: inherit; text-decoration: underline; }
-.grecaptcha-badge { z-index: 50; }
+/* Badge disembunyikan karena menutupi form di mobile; atribusi Google tetap tampil di bawah form (diizinkan kebijakan reCAPTCHA). */
+.grecaptcha-badge { visibility: hidden !important; }
 
 /* CAPTCHA gambar di login */
 .captcha-box { border: 1px solid var(--border); border-radius: 14px; padding: 4px 16px 16px; margin: 4px 0 0; display: grid; gap: 8px; min-width: 0; }
