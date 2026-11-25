@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, CalendarCheck2 } from 'lucide-react'
 import { api, errorMessage } from '@/lib/client'
-import { dayName, hm, longDate } from '@/lib/format'
+import { hm, longDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Alert, Avatar, Card, EmptyState, PageHeader, Skeleton, StatusBadge } from '../kit'
 import { Button } from '../ui/button'
 import { Card as UICard } from '../ui/card'
 import { Skeleton as Bone } from '../ui/misc'
+import { AttendanceTrend } from './attendance-trend'
 
 type Dashboard = {
   date: string
@@ -33,9 +34,9 @@ type Totals = Dashboard['totals']
 function TodaySummary({ totals, present, rate }: { totals?: Totals; present: number; rate: number }) {
   const total = totals?.total ?? 0
   const items = [
-    { key: 'hadir', label: 'Tepat waktu', value: totals?.hadir ?? 0, bar: 'bg-success', dot: 'bg-success' },
-    { key: 'terlambat', label: 'Terlambat', value: totals?.terlambat ?? 0, bar: 'bg-warning', dot: 'bg-warning' },
-    { key: 'izin', label: 'Izin / sakit / cuti', value: totals?.izin ?? 0, bar: 'bg-info', dot: 'bg-info' },
+    { key: 'hadir', label: 'Tepat waktu', value: totals?.hadir ?? 0, bar: 'bg-chart-1', dot: 'bg-chart-1' },
+    { key: 'terlambat', label: 'Terlambat', value: totals?.terlambat ?? 0, bar: 'bg-chart-2', dot: 'bg-chart-2' },
+    { key: 'izin', label: 'Izin / sakit / cuti', value: totals?.izin ?? 0, bar: 'bg-chart-3', dot: 'bg-chart-3' },
     { key: 'belum', label: 'Belum hadir', value: totals?.belum ?? 0, bar: 'bg-muted-foreground/25', dot: 'bg-muted-foreground/50' },
   ]
   const pct = (v: number) => (total ? Math.round((v / total) * 100) : 0)
@@ -100,7 +101,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
   const present = t ? t.hadir + t.terlambat : 0
   const rate = t && t.total ? Math.round((present / t.total) * 100) : 0
   const days = data ? Array.from({ length: 7 }, (_, i) => addDays(data.weekStart, i)) : []
-  const maxTrend = Math.max(1, t?.total ?? 1, ...(data?.trend.map((d) => Number(d.hadir) + Number(d.terlambat) + Number(d.izin)) ?? [1]))
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -118,34 +118,7 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
       <TodaySummary totals={t} present={present} rate={rate} />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card title="Tren 7 hari" description="Jumlah karyawan hadir per hari" className="xl:col-span-2">
-          {!data ? <Skeleton rows={5} /> : (
-            <>
-              <div className="grid h-52 grid-cols-7 items-end gap-2 sm:gap-4" role="img" aria-label="Grafik kehadiran 7 hari terakhir">
-                {days.map((d) => {
-                  const row = data.trend.find((x) => x.work_date === d)
-                  const h = Number(row?.hadir ?? 0), l = Number(row?.terlambat ?? 0), z = Number(row?.izin ?? 0)
-                  return (
-                    <div key={d} className="grid h-full grid-rows-[auto_1fr_auto] justify-items-center gap-1.5" title={`${dayName(d)}: tepat waktu ${h}, terlambat ${l}, izin ${z}`}>
-                      <span className="text-xs font-medium tabular-nums">{h + l}</span>
-                      <div className="flex h-full w-full max-w-10 flex-col justify-end overflow-hidden rounded-md bg-muted">
-                        <span className="block w-full bg-info/80 transition-[height] duration-500" style={{ height: `${(z / maxTrend) * 100}%` }} />
-                        <span className="block w-full bg-warning/80 transition-[height] duration-500" style={{ height: `${(l / maxTrend) * 100}%` }} />
-                        <span className="block w-full bg-success transition-[height] duration-500" style={{ height: `${(h / maxTrend) * 100}%` }} />
-                      </div>
-                      <span className="text-xs text-muted-foreground">{dayName(d).slice(0, 3)}</span>
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-success" /> Tepat waktu</span>
-                <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-warning/80" /> Terlambat</span>
-                <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-info/80" /> Izin/sakit/cuti</span>
-              </div>
-            </>
-          )}
-        </Card>
+        <AttendanceTrend days={days} rows={data?.trend ?? []} today={data?.date} loading={!data} />
 
         <Card title="Per divisi" description="Kehadiran hari ini">
           {!data ? <Skeleton rows={5} /> : data.departments.length === 0 ? <EmptyState title="Belum ada karyawan" /> : (

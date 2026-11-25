@@ -34,6 +34,10 @@
   --input: #dbe1e8;
   --ring: #0a85b8;
   --sidebar: #ffffff;
+  /* Seri grafik (divalidasi CVD terhadap permukaan terang) */
+  --chart-1: #0f8a5f;
+  --chart-2: #b45309;
+  --chart-3: #4f5bd5;
 }
 
 :root[data-theme='dark'] {
@@ -61,6 +65,10 @@
   --input: #2a3948;
   --ring: #1ea7dc;
   --sidebar: #0f161e;
+  /* Seri grafik mode gelap (divalidasi CVD terhadap #111a23) */
+  --chart-1: #2aa57f;
+  --chart-2: #c9772a;
+  --chart-3: #7d88f0;
 }
 
 @theme inline {
@@ -88,6 +96,9 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-sidebar: var(--sidebar);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
